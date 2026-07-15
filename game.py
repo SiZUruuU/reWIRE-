@@ -26,6 +26,9 @@ class Game:
         }
         # delta time for frame-rate independence
         self.delta_time, self.prev_time = 0, 0
+        # Stack data struct, push() and pop()
+        self.state_stack = []
+        # os.path.join() for asset dir
         self.load_assets()
 
     # main game loop
