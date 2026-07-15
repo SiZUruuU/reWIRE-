@@ -1,20 +1,15 @@
 import pygame
-
-# intializtions
-pygame.init()
-screen = pygame.display.set_mode((640, 480))
-clock = pygame.time.Clock()
-
-# game loop var
-isRunning:bool = pygame.display.get_init()
+from Components.game import Game as game
 
 # game loop
-while isRunning:
+while game.isRunning:
     # poll for events
+    game.poll_events()
 
     # logic
+    game.update()
 
     # renderer
+    game.render()
 
-    pass
 pygame.quit()
