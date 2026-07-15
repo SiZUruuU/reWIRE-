@@ -1,4 +1,5 @@
 import pygame, os, time
+from Components.screen.title_screen import TitleScreen
 
 class Game:
     def __init__(self):
@@ -30,6 +31,7 @@ class Game:
         self.state_stack = []
         # os.path.join() for asset dir
         self.load_assets()
+        self.load_states()
 
     # main game loop
     def game_loop(self):
@@ -87,21 +89,44 @@ class Game:
 
     # logic update
     def update(self):
-        pass
+        # peek the top and update
+        self.state_stack[-1].update(self.delta_time, self.action_key)
 
     # render update
     def render(self):
+        # RENDER
+        self.state_stack[-1].render(self.game_canvas)
+
         # upscale the game world to the screen dimensions
-        self.screen.blit(pygame.transform.scale(self.game_canvas, (self.SCREEN_WIDTH, self.SCREEN_HEIGHT)), (0, 0))
+        self.screen.blit(pygame.transform.scale(self.game_canvas, (self.SCREEN_WIDTH, self.SCREEN_HEIGHT)), (0, 0))        
         # swap buffers
         pygame.display.flip()
 
+    # handle text drawing on screen
+    def draw_text(self, surface, text, color, x, y):
+        text_surface = self.main_font.render(text, True, color)
+        text_rect = text_surface.get_rect()
+        text_rect.center = (x, y)
+        surface.blit(text_surface, text_rect)
+
+    # handle asset loading
     def load_assets(self):
         self.assets_dir = os.path.join("Assets")
         self.sprite_dir = os.path.join(self.assets_dir, "sprites")
         self.font_dir = os.path.join(self.assets_dir, "fonts")
-        self.header_font = None
+        self.main_font = pygame.font.Font(os.path.join(self.font_dir, "retganon.ttf"), 18)
 
+    # add states to the stack
+    def load_states(self):
+        self.title_screen = TitleScreen(self)
+        self.state_stack.append(self.title_screen)
+
+    # reset all action key state to 'False'
+    def reset_keys(self):
+        for action in self.action_key:
+            self.action_key[action] ==  False
+
+# entry point
 if __name__ == "__main__":
     game = Game()
     while game.isRunning:
