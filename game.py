@@ -25,7 +25,8 @@ class Game:
             "up":False,
             "down":False,
             "interact":False,
-            "space":False
+            "space":False,
+            "Lshift": False
         }
         # delta time for frame-rate independence
         self.delta_time, self.prev_time = 0, 0
@@ -67,6 +68,8 @@ class Game:
                     self.action_keys["space"] = True                    
                 if event.key == pygame.K_e:
                     self.action_keys["interact"] = True
+                if event.key == pygame.K_LSHIFT:
+                    self.action_keys["Lshift"] = True
 
             # KEYUP events
             if event.type == pygame.KEYUP:
@@ -84,6 +87,8 @@ class Game:
                     self.action_keys["space"] = False                    
                 if event.key == pygame.K_e:
                     self.action_keys["interact"] = False
+                if event.key == pygame.K_LSHIFT:
+                    self.action_keys["Lshift"] = True
 
     def get_delta_time(self):
         current_time = time.time()
