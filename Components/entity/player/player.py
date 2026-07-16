@@ -1,0 +1,12 @@
+import pygame
+
+class Player(pygame.sprite.Sprite):
+    def __init__(self, game, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.game = game
+        self.x, self.y = x, y
+        self.width, self.height = 64, 64
+        self.image = pygame.Surface((self.width, self.height))
+        self.image.fill((0, 255, 0))
+        self.rect = self.image.get_rect(topleft=(x,y))
+        self.speed = 10
