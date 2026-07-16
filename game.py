@@ -5,6 +5,7 @@ class Game:
     def __init__(self):
         # initalize pygame
         pygame.init()
+        self.clock = pygame.time.Clock()
 
         # configs #
         # game world size
@@ -144,3 +145,5 @@ if __name__ == "__main__":
     game = Game()
     while game.isRunning:
         game.game_loop()
+        game.clock.tick(60)
+        pygame.display.set_caption(f"FPS: {int(game.clock.get_fps())}")
