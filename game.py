@@ -14,8 +14,10 @@ class Game:
         self.TILE_WIDTH, self.TILE_HEIGHT = 32, 32
         # upscale size
         self.SCREEN_WIDTH, self.SCREEN_HEIGHT = self.GAME_WIDTH*3, self.GAME_HEIGHT*3
-        # game world and screen set-up
+        # game world and screen set-up:
+        # game_canvas is where the game logic happens so use this for world coords
         self.game_canvas = pygame.Surface((self.GAME_WIDTH, self.GAME_HEIGHT))
+        # screen is simply the upscaled version of game_canvas
         self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT))
         # set sprite groups
         self.all_sprites = pygame.sprite.Group()
@@ -138,7 +140,7 @@ class Game:
     # reset all action key state to 'False'
     def reset_keys(self):
         for action in self.action_keys:
-            self.action_keys[action] ==  False
+            self.action_keys[action] = False
 
 # entry point
 if __name__ == "__main__":
