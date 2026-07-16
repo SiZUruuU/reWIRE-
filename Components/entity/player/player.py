@@ -1,9 +1,8 @@
 import pygame
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, game, x, y):
-        pygame.sprite.Sprite.__init__(self)
-        self.game = game
+    def __init__(self, x, y, groups):
+        pygame.sprite.Sprite.__init__(self, groups)
         self.x, self.y = x, y
         self.width, self.height = 64, 64
         self.image = pygame.Surface((self.width, self.height))
