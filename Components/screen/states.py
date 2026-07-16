@@ -1,13 +1,16 @@
+from abc import ABC, abstractmethod
 # ABSTRACT CLASS FOR SCREEN STATE
 # uses a Stack data struct
-class State:
+class State(ABC):
     def __init__(self, game):
         self.game = game
         self.prev_state = None
 
+    @abstractmethod
     def update(self, delta_time, actions):
         pass
 
+    @abstractmethod
     def render(self, surface):
         pass
 
