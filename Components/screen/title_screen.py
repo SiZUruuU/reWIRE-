@@ -2,7 +2,7 @@ from .states import State as Base
 
 class TitleScreen(Base):
     def __init__(self, game):
-        print("TitleScreen initialized")
+        #print("TitleScreen initialized")
         Base.__init__(self, game)
 
     def update(self, delta_time, actions):
