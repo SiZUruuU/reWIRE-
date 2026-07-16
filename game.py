@@ -9,11 +9,11 @@ class Game:
 
         # configs #
         # game world size
-        self.GAME_WIDTH, self.GAME_HEIGHT = 640, 320
+        self.GAME_WIDTH, self.GAME_HEIGHT = 384, 192
         # tile size
         self.TILE_WIDTH, self.TILE_HEIGHT = 32, 32
         # upscale size
-        self.SCREEN_WIDTH, self.SCREEN_HEIGHT = self.GAME_WIDTH*2, self.GAME_HEIGHT*2
+        self.SCREEN_WIDTH, self.SCREEN_HEIGHT = self.GAME_WIDTH*3, self.GAME_HEIGHT*3
         # game world and screen set-up
         self.game_canvas = pygame.Surface((self.GAME_WIDTH, self.GAME_HEIGHT))
         self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT))
