@@ -9,13 +9,22 @@ class Player(pygame.sprite.Sprite):
         self.image.fill((0, 255, 0))
         self.rect = self.image.get_rect(topleft=(x,y))
         self.speed = 10
+        self.moveSpd = 0
 
     def action_handle(self, action):
         #Handles sprint
         if action["Lshift"]:
-            self.moveSpd = self.runSpd
-        else:
-            self.moveSpd = self.walkSpd
+            self.moveSpd = self.speed * 2
+        elif not action["Lshift"]:
+            self.moveSpd = self.speed
 
         if action["up"]:
-            pass
+            self.y -= self.moveSpd
+        if action["down"]:
+            self.y += self.moveSpd
+        if action["left"]:
+            self.x -= self.moveSpd
+        if action["right"]:
+            self.x += self.moveSpd
+        if action["interact"]:
+            pass #Interact action
