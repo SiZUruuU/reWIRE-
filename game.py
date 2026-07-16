@@ -16,6 +16,8 @@ class Game:
         # game world and screen set-up
         self.game_canvas = pygame.Surface((self.GAME_WIDTH, self.GAME_HEIGHT))
         self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT))
+        # set sprite groups
+        self.all_sprites = pygame.sprite.Group()
         # game loop flags
         self.isRunning, self.isPlaying = True, True
         # action key dictionary
