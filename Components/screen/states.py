@@ -11,7 +11,7 @@ class State(ABC):
         pass
 
     @abstractmethod
-    def render(self, surface):
+    def render(self, display):
         pass
 
     # called to enter next assigned state
