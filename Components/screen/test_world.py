@@ -16,8 +16,7 @@ class TestWorld(Base):
 
     def update(self, delta_time, actions):
         self.game.all_sprites.update(delta_time, actions)
-        self.camera.scroll()
-        self.game.reset_keys()
+        self.camera.scroll(delta_time)
 
     def render(self, display):
         display.fill((50, 60, 90))
