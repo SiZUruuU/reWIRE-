@@ -11,5 +11,5 @@ class Camera:
     def setmethod(self, style):
         self.style = style
     
-    def scroll(self):
-        self.style.scroll()
+    def scroll(self, delta_time):
+        self.style.scroll(delta_time)
