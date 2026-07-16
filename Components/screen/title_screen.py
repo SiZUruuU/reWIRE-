@@ -3,11 +3,12 @@ from .test_world import TestWorld
 
 class TitleScreen(Base):
     def __init__(self, game):
-        #print("TitleScreen initialized")
-        Base.__init__(self, game)
+        # intialize using the parent __init__
+        super().__init__(game)
 
     def update(self, delta_time, actions):
-        if actions["space"]:            
+        # condition check to move next screen
+        if actions["space"]:
             new_state = TestWorld(self.game)
             new_state.enter_state()
         self.game.reset_keys()

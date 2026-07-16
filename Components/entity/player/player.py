@@ -1,6 +1,21 @@
-class Player:
+import pygame
 
-    def __init__(self):
-        self.moveSpd = 2
-        self.runSpd = self.moveSpd * 2
-        
+class Player(pygame.sprite.Sprite):
+    def __init__(self, x, y, groups):
+        pygame.sprite.Sprite.__init__(self, groups)
+        self.x, self.y = x, y
+        self.width, self.height = 64, 64
+        self.image = pygame.Surface((self.width, self.height))
+        self.image.fill((0, 255, 0))
+        self.rect = self.image.get_rect(topleft=(x,y))
+        self.speed = 10
+
+    def action_handle(self, action):
+        #Handles sprint
+        if action["Lshift"]:
+            self.moveSpd = self.runSpd
+        else:
+            self.moveSpd = self.walkSpd
+
+        if action["up"]:
+            pass
