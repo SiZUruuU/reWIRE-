@@ -4,7 +4,7 @@ from .test_world import TestWorld
 class TitleScreen(Base):
     def __init__(self, game):
         # intialize using the parent __init__
-        Base.__init__(self, game)
+        super().__init__(game)
 
     def update(self, delta_time, actions):
         # condition check to move next screen
