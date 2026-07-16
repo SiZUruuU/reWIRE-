@@ -7,5 +7,5 @@ class BaseCam(ABC):
         self.target = target
     
     @abstractmethod
-    def scroll(self):
+    def scroll(self, delta_time):
         pass
