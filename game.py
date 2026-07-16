@@ -1,5 +1,6 @@
 import pygame, os, time
 from Components.screen.title_screen import TitleScreen
+from Components.screen.test_world import TestWorld
 
 class Game:
     def __init__(self):
@@ -8,7 +9,9 @@ class Game:
 
         # configs #
         # game world size
-        self.GAME_WIDTH, self.GAME_HEIGHT = 600, 320
+        self.GAME_WIDTH, self.GAME_HEIGHT = 640, 320
+        # tile size
+        self.TILE_WIDTH, self.TILE_HEIGHT = 32, 32
         # upscale size
         self.SCREEN_WIDTH, self.SCREEN_HEIGHT = self.GAME_WIDTH*2, self.GAME_HEIGHT*2
         # game world and screen set-up
@@ -31,6 +34,7 @@ class Game:
         self.state_stack = []
         # os.path.join() for asset dir
         self.load_assets()
+        # load states to stack, must be in order
         self.load_states()
 
     # main game loop
@@ -118,8 +122,12 @@ class Game:
 
     # add states to the stack
     def load_states(self):
+        #initialize
         self.title_screen = TitleScreen(self)
-        self.state_stack.append(self.title_screen)
+        self.test_world = TestWorld(self)
+        # add to stack
+        self.state_stack.append(self.test_world)
+        #self.state_stack.append(self.title_screen)
 
     # reset all action key state to 'False'
     def reset_keys(self):
