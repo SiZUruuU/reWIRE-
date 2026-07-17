@@ -7,10 +7,12 @@ from ..utils import get_world_mousePos
 
 # Direction enums
 class Direction:
-    NORTH = "north"
-    SOUTH = "south"
-    EAST = "east"
-    WEST = "west"
+    #Changed enum value to ints
+    #W/ the idea to increment when rotating 
+    NORTH = 1
+    SOUTH = 3
+    EAST = 2
+    WEST = 4
 
 # TESTING FOR FEATURES
 class TestWorld(Base):
