@@ -12,8 +12,8 @@ class TestMap(BaseMap):
     # creates a checker platform at the middle of the game world
     def draw(self, display, camera):
         # loops through x and y axis to place tiles
-        for i in range(1, self.rows): # y-axis
-            for j in range(1, self.cols): # x-axis
+        for i in range(0, self.rows): # y-axis
+            for j in range(0, self.cols): # x-axis
                 # sets tile color (odd or even) for checkered pattern
                 color = self.dark if (i+j) % 2 == 0 else self.light
                 # world and screen offset calculation:

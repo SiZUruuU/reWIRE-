@@ -6,6 +6,7 @@ class BaseCam(ABC):
         self.camera = camera
         self.target = target
     
+    # method to use to define how the camera moves
     @abstractmethod
     def scroll(self, delta_time):
         pass

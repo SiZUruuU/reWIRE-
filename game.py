@@ -3,26 +3,27 @@ from component.screen.title_screen import TitleScreen
 
 class Game:
     def __init__(self):
-        # initalize pygame
+        # Initalize pygame:
         pygame.init()
-        self.clock = pygame.time.Clock()
-        self.global_time = 0
 
-        # configs #
+        # Set dimension values:
         # game world size
         self.GAME_WIDTH, self.GAME_HEIGHT = 384, 192
         # tile size
         self.TILE_WIDTH, self.TILE_HEIGHT = 32, 32
-        # upscale size
+        # upscale size - basically just thrice the game surface
         self.SCREEN_WIDTH, self.SCREEN_HEIGHT = self.GAME_WIDTH*3, self.GAME_HEIGHT*3
-        # game world and screen set-up:
+
+        # Create game world and display surface:
         # game_canvas is where the game logic happens so use this for world coords
         self.game_canvas = pygame.Surface((self.GAME_WIDTH, self.GAME_HEIGHT))
         # screen is simply the upscaled version of game_canvas
         self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT))
-        # game loop flags
+
+        # Game loop flags:
         self.isRunning, self.isPlaying = True, True
-        # action key dictionary
+
+        # Action keys dict:
         self.action_keys = {
             "left":False,
             "right":False,
@@ -33,8 +34,16 @@ class Game:
             "Lshift":False,
             "LMB":False,
         }
+
+        # Timers:
         # delta time for frame-rate independence
         self.delta_time, self.prev_time = 0, 0
+        # clock to limit fps
+        self.clock = pygame.time.Clock()
+        # global timer for animations sync
+        self.global_time = 0
+
+        # Game state:
         # Stack data struct, push() and pop()
         self.state_stack = []
         # os.path.join() for asset dir
@@ -105,18 +114,19 @@ class Game:
                 if event.key == pygame.K_LSHIFT:
                     self.action_keys["Lshift"] = True
 
+    # delta time calculation
     def get_delta_time(self):
         current_time = time.time()
         self.delta_time = current_time - self.prev_time
         self.prev_time = current_time
 
-    # logic update
+    # global update loop
     def update(self):
         self.global_time = pygame.time.get_ticks()
         # peek the top and update
         self.state_stack[-1].update(self.delta_time, self.action_keys)
 
-    # render update
+    # global render loop
     def render(self):
         # RENDER
         self.state_stack[-1].render(self.game_canvas)
@@ -140,7 +150,7 @@ class Game:
         self.font_dir = os.path.join(self.assets_dir, "fonts")
         self.main_font = pygame.font.Font(os.path.join(self.font_dir, "retganon.ttf"), 18)
 
-    # add states to the stack
+    # starting game state, preferably 'Title Screen'
     def load_states(self):
         #initialize
         self.title_screen = TitleScreen(self)

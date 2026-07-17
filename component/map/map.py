@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+# ABSTRACT CLASS FOR MAPS:
 class BaseMap(ABC):
     def __init__(self, game, group, width, height):
         self.game = game

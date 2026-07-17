@@ -31,5 +31,4 @@ class BaseEntity(ABC, pygame.sprite.Sprite):
         total_frames = len(self.animations[state])
                
         self.current_frame = (time // self.frame_duration) % total_frames
-        print(self.current_frame)
         return self.animations[state][int(self.current_frame)]
