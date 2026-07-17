@@ -1,11 +1,12 @@
 import pygame, os, time
-from Components.screen.title_screen import TitleScreen
+from component.screen.title_screen import TitleScreen
 
 class Game:
     def __init__(self):
         # initalize pygame
         pygame.init()
         self.clock = pygame.time.Clock()
+        self.global_time = 0
 
         # configs #
         # game world size
@@ -19,8 +20,6 @@ class Game:
         self.game_canvas = pygame.Surface((self.GAME_WIDTH, self.GAME_HEIGHT))
         # screen is simply the upscaled version of game_canvas
         self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT))
-        # set sprite groups
-        self.all_sprites = pygame.sprite.Group()
         # game loop flags
         self.isRunning, self.isPlaying = True, True
         # action key dictionary
@@ -31,7 +30,8 @@ class Game:
             "down":False,
             "interact":False,
             "space":False,
-            "Lshift": False
+            "Lshift":False,
+            "LMB":False,
         }
         # delta time for frame-rate independence
         self.delta_time, self.prev_time = 0, 0
@@ -57,6 +57,16 @@ class Game:
                 self.isRunning = False
                 self.isPlaying = False
 
+            # MOUSEBUTTONDOWN events
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    self.action_keys["LMB"] = True
+
+            # MOUSEBUTTONUP events
+            if event.type == pygame.MOUSEBUTTONUP:
+                if event.button == 1:
+                    self.action_keys["LMB"] = False
+
             # KEYDOWN events                
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
@@ -74,7 +84,7 @@ class Game:
                 if event.key == pygame.K_e:
                     self.action_keys["interact"] = True
                 if event.key == pygame.K_LSHIFT:
-                    self.action_keys["Lshift"] = True
+                    self.action_keys["Lshift"] = True            
 
             # KEYUP events
             if event.type == pygame.KEYUP:
@@ -102,6 +112,7 @@ class Game:
 
     # logic update
     def update(self):
+        self.global_time = pygame.time.get_ticks()
         # peek the top and update
         self.state_stack[-1].update(self.delta_time, self.action_keys)
 
@@ -124,7 +135,7 @@ class Game:
 
     # handle asset loading
     def load_assets(self):
-        self.assets_dir = os.path.join("Assets")
+        self.assets_dir = os.path.join("asset")
         self.sprite_dir = os.path.join(self.assets_dir, "sprites")
         self.font_dir = os.path.join(self.assets_dir, "fonts")
         self.main_font = pygame.font.Font(os.path.join(self.font_dir, "retganon.ttf"), 18)
