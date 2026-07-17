@@ -33,6 +33,8 @@ class Game:
             "space":False,
             "Lshift":False,
             "LMB":False,
+            "b_key":False, #Build mode
+            "r_key":False #Conveyer rotate key
         }
 
         # Timers:
