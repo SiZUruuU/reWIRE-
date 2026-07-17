@@ -1,6 +1,7 @@
 import pygame
+from .base_entity import BaseEntity
 
-class Player(pygame.sprite.Sprite):
+class Player(BaseEntity):
     def __init__(self, x, y, groups):
         # initialize with parent class
         super().__init__(groups)
@@ -9,14 +10,14 @@ class Player(pygame.sprite.Sprite):
         # set size
         self.width, self.height = 64, 64
         # display size, can be used for collisions
-        self.image = pygame.image.load("Assets/sprites/player/00.png").convert_alpha()
+        self.image = pygame.image.load("asset/sprites/player/base.png").convert_alpha()
         # bounding box, sets topleft as origin
         self.rect = self.image.get_rect(topleft=(x,y))
 
         # animation
         self.animations = {}
         self.current_frame = 0
-        self.animation_speed = .55
+        self.animation_speed = .3
 
         # load sprite animations
         self.load_animations()
@@ -52,19 +53,10 @@ class Player(pygame.sprite.Sprite):
         # finally update velocity:
         self.velocity = direction * self.speed
 
-    def load_frames(self, filename, x, y, frame_width, frame_height, num_frames):
-        sheet = pygame.image.load(filename).convert_alpha()
-        frames = []
-
-        for i in range(num_frames):
-            frame = sheet.subsurface(pygame.Rect(x + i * frame_width, y, frame_width, frame_height))
-            frames.append(frame)
-        return frames
-
     def load_animations(self):
-        self.animations[1] = self.load_frames("Assets/sprites/player/run/player_run_spritesheet.png", 0, 0, 32, 46, 8)
+        self.animations[1] = self.load_frames("asset/sprites/player/run_spritesheet.png", 0, 0, 32, 46, 8)
         
-    def update(self, delta_time, actions):
+    def update(self, global_time, delta_time, actions):
         # input key actions
         self.handle_input(actions)
 

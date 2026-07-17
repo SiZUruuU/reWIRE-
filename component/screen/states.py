@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+
 # ABSTRACT CLASS FOR SCREEN STATE
 # uses a Stack data struct
 class State(ABC):

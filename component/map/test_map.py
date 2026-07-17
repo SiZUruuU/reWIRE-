@@ -2,8 +2,8 @@ from .map import BaseMap
 import pygame
 
 class TestMap(BaseMap):
-    def __init__(self, game):
-        super().__init__(game)
+    def __init__(self, game, group):
+        super().__init__(game, group, 19, 9)
         self.dark = (90, 100, 130)
         self.light = (115, 130, 170)
         self.rows = 9
