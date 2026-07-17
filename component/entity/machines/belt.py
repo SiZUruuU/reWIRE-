@@ -10,8 +10,13 @@ class Belt(BaseEntity):
         self.x, self.y = x, y
         self.width, self.height = 32, 32
         self.direction = direction
-        print(direction)
-        self.axis = XAXIS if (direction == "west" or direction == "east") else YAXIS
+        
+        key = pygame.key.get_pressed()
+
+        if key['r']:
+            self.rotate()
+            
+        self.axis = XAXIS if (direction == "2" or direction == "4") else YAXIS #2 == east && 4 == west
         
         self.image = pygame.Surface((self.width, self.height))
         self.image.fill((0, 255, 0))
@@ -37,3 +42,9 @@ class Belt(BaseEntity):
     def update(self, global_time, delta_time, actions):
         # update animation
         self.image = self.play_animation(self.axis, global_time)
+
+    def rotate(self):
+        if self.direction < 4:
+            self.direction += 1
+        elif self.direction == 4:
+            self.direction = 1
