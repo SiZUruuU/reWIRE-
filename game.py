@@ -77,7 +77,7 @@ class Game:
             if event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
                     self.action_keys["LMB"] = False
-
+                
             # KEYDOWN events                
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
@@ -95,7 +95,9 @@ class Game:
                 if event.key == pygame.K_e:
                     self.action_keys["interact"] = True
                 if event.key == pygame.K_LSHIFT:
-                    self.action_keys["Lshift"] = True            
+                    self.action_keys["Lshift"] = True  
+                if event.key == pygame.K_r:
+                    self.action_keys["r_key"] = True         
 
             # KEYUP events
             if event.type == pygame.KEYUP:
@@ -114,7 +116,7 @@ class Game:
                 if event.key == pygame.K_e:
                     self.action_keys["interact"] = False
                 if event.key == pygame.K_LSHIFT:
-                    self.action_keys["Lshift"] = True
+                    self.action_keys["Lshift"] = False
 
     # delta time calculation
     def get_delta_time(self):
@@ -160,9 +162,8 @@ class Game:
         # add to stack
         self.state_stack.append(self.title_screen)
 
-    # reset all action key state to 'False'
-    def reset_keys(self):
-        for action in self.action_keys:
+    # reset action key state to 'False'
+    def reset_keys(self, action):
             self.action_keys[action] = False
 
 # entry point

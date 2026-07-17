@@ -11,7 +11,7 @@ class TitleScreen(Base):
         if actions["space"]:
             new_state = TestWorld(self.game)
             new_state.enter_state()
-        self.game.reset_keys()
+        self.game.reset_keys("space")
 
     def render(self, display):
         display.fill((255, 255, 255))
