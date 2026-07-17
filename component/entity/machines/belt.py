@@ -10,6 +10,7 @@ class Belt(BaseEntity):
         self.x, self.y = x, y
         self.width, self.height = 32, 32
         self.direction = direction
+        print(direction)
         self.axis = XAXIS if (direction == "west" or direction == "east") else YAXIS
         
         self.image = pygame.Surface((self.width, self.height))
