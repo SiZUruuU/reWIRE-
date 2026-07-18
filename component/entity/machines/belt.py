@@ -32,7 +32,7 @@ class Belt(BaseEntity):
                 pass
 
         elif self.axis == YAXIS:
-            if self.direction == 1:
+            if self.direction == 3:
                 self.animations[YAXIS] = [pygame.transform.flip(f, False, True) for f in self.animations[YAXIS]]
             else:
                 pass
