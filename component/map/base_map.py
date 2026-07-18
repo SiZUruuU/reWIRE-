@@ -1,11 +1,17 @@
 from abc import ABC, abstractmethod
+from ..utils import EntityType
+from ..entity import *
 
 # ABSTRACT CLASS FOR MAPS:
 class BaseMap(ABC):
-    def __init__(self, game, group, width, height):
-        self.game = game
+    ENTITY = {
+        EntityType.CONVEYOR : Conveyor        
+    }
+
+    def __init__(self, width, height, world):
+        self.game = world.game
         # sprite groups for this world:
-        self.all_sprites = group
+        self.all_sprites = world.all_sprites
         # create base empty world map:
         # this is used for tracking which tile is occupied 
         self.grid = [[None for _ in range(height)] for _ in range(width)]
@@ -19,10 +25,10 @@ class BaseMap(ABC):
         # boundary check fail:
         return False
 
-    def add_entity(self, entity, x, y):
+    def place_entity(self, entity_type, x, y):
         # check if grid is free:
         if self.is_tile_free(x, y):
-            self.grid[x][y] = entity
+            self.grid[x][y] = self.ENTITY[entity_type]
             # tile was placed:
             return True
         # something's blocking the waaaay:

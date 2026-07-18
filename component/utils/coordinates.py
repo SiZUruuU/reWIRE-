@@ -7,8 +7,7 @@ def get_world_mousePos(game, camera):
     game_h = game.GAME_HEIGHT
     screen_w = game.SCREEN_WIDTH
     screen_h = game.SCREEN_HEIGHT
-    tile_w = game.TILE_WIDTH
-    tile_h = game.TILE_HEIGHT
+    tile_s = game.TILE_SIZE
 
     # handle mouse pos with respect to screen and game display:
     scaled_x = mx * (game_w/screen_w)
@@ -22,14 +21,23 @@ def get_world_mousePos(game, camera):
     world_y = scaled_y + int(offset.y)
 
     # convert processed mouse pos to respect the 32x32 world grid:
-    tile_x = int(world_x//tile_h) # becomes a number divisible by 32 (tile_h)
-    tile_y = int(world_y//tile_w)
+    tile_x = int(world_x//tile_s) # becomes a number divisible by 32 (tile_h)
+    tile_y = int(world_y//tile_s)
 
     # ex: returns world coords at {x32, y32} tile coords at tile[1][1]
     # use tile_x/y for index and world_x/y for world coordinates
     return {
             "tile_x": tile_x, 
             "tile_y": tile_y, 
-            "world_x": tile_x * tile_w, 
-            "world_y": tile_y * tile_h
+            "world_x": tile_x * tile_s,
+            "world_y": tile_y * tile_s
             }
+
+def check_tile_at(world_x, world_y, game, grid_map):
+    tile_x = int(world_x // game.TILE_SIZE)
+    tile_y = int(world_y // game.TILE_SIZE)
+    try:
+        tile = grid_map[tile_x][tile_y]
+    except IndexError:
+        return None
+    return tile
