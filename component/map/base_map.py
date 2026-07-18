@@ -25,10 +25,13 @@ class BaseMap(ABC):
         # boundary check fail:
         return False
 
-    def place_entity(self, entity_type, x, y):
+    def place_entity(self, entity_type, x, y, direction):
         # check if grid is free:
         if self.is_tile_free(x, y):
-            self.grid[x][y] = self.ENTITY[entity_type]
+            self.grid[x][y] = self.ENTITY[entity_type](
+                x*self.world.game.TILE_SIZE, 
+                y*self.world.game.TILE_SIZE, 
+                direction, self.world)
             # tile was placed:
             return True
         # something's blocking the waaaay:
