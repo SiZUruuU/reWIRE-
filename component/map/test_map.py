@@ -1,4 +1,4 @@
-from .base_map import BaseMap
+from .base import BaseMap
 import pygame
 
 class TestMap(BaseMap):
