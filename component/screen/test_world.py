@@ -89,8 +89,12 @@ class TestWorld(State):
 
         # handle object placement:
         if actions["LMB"] and self.selected_entity != EntityType.NONE:
-            print("LMB")
-            self.map.place_entity(self.selected_entity, mouse['tile_x'], mouse['tile_y'], self.direction, self)
+            self.map.place_entity(
+                self.selected_entity, 
+                mouse['tile_x'], 
+                mouse['tile_y'], 
+                self.direction
+            )
             self.game.reset_key("LMB")
 
         # resource placement test:

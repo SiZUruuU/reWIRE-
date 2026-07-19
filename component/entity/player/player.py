@@ -17,12 +17,12 @@ class Player(BaseEntity):
 
         self.animations = {
             Animation.RUN : world.game.assets[EntityType.PLAYER][Animation.RUN]
-        }
+        }        
 
         self.image = self.animations[Animation.RUN][0]
         self.rect = self.image.get_rect(topleft=(x,y))
 
-        self.animation_speed = .3
+        self.animation_speed = 12
         
     def update(self, global_time, delta_time, actions):
         # input key actions
@@ -32,7 +32,7 @@ class Player(BaseEntity):
         self.x += self.velocity.x * delta_time
         self.y += self.velocity.y * delta_time
 
-        frame = self.get_frame_animation(Animation.RUN, global_time)        
+        frame = self.get_frame_animation(Animation.RUN, global_time)  
         if self.facing_right:
             frame = pygame.transform.flip(frame, True, False)
         self.image = frame
