@@ -1,4 +1,4 @@
 from .coordinates import get_world_mousePos, check_tile_at
-from .entity_types import EntityType, Animation, Direction, Fonts
+from .enums import EntityType, Animation, Direction, Fonts, Layers
 
-__all__ = ["get_world_mousePos", "check_tile_at", "EntityType", "Animation", "Fonts", "Direction"]
+__all__ = ["get_world_mousePos", "check_tile_at", "EntityType", "Animation", "Fonts", "Direction", "Layers"]
