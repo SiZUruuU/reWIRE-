@@ -1,5 +1,6 @@
 import pygame, os, time
 from component.screen.title_screen import TitleScreen
+from component.utils import EntityType, Animation, Direction, Fonts
 
 class Game:
     def __init__(self):
@@ -8,9 +9,8 @@ class Game:
 
         # Set dimension values:
         # game world size
-        self.GAME_WIDTH, self.GAME_HEIGHT = 384, 192
-        # tile size
-        self.TILE_WIDTH, self.TILE_HEIGHT = 32, 32
+        self.GAME_WIDTH, self.GAME_HEIGHT = 384, 192        
+        self.TILE_SIZE = 32
         # upscale size - basically just thrice the game surface
         self.SCREEN_WIDTH, self.SCREEN_HEIGHT = self.GAME_WIDTH*3, self.GAME_HEIGHT*3
 
@@ -33,13 +33,25 @@ class Game:
             "space":False,
             "Lshift":False,
             "LMB":False,
-            "b_key":False, #Build mode
-            "r_key":False #Conveyer rotate key
+            "RMB":False,
+            "key_b":False, #Build mode
+            "key_r":False, #Conveyer rotate key
+            "key_q":False, #Clear hotbar key
+            "key_1":False,
+            "key_2":False,
+            "key_3":False,
+            "key_4":False,
+            "key_5":False,
+            "key_6":False,
+            "key_7":False,
+            "key_8":False,
+            "key_9":False,
+            "key_0":False,
         }
 
         # Timers:
         # delta time for frame-rate independence
-        self.delta_time, self.prev_time = 0, 0
+        self.delta_time, self.prev_time = 0, time.time()
         # clock to limit fps
         self.clock = pygame.time.Clock()
         # global timer for animations sync
@@ -48,6 +60,9 @@ class Game:
         # Game state:
         # Stack data struct, push() and pop()
         self.state_stack = []
+
+        self.assets = {}
+        # load stuff:
         # os.path.join() for asset dir
         self.load_assets()
         # load states to stack, must be in order
@@ -72,11 +87,15 @@ class Game:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     self.action_keys["LMB"] = True
+                if event.button == 3:
+                    self.action_keys["RMB"] = True
 
             # MOUSEBUTTONUP events
             if event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
                     self.action_keys["LMB"] = False
+                if event.button == 3:
+                    self.action_keys["RMB"] = False                    
                 
             # KEYDOWN events                
             if event.type == pygame.KEYDOWN:
@@ -97,7 +116,27 @@ class Game:
                 if event.key == pygame.K_LSHIFT:
                     self.action_keys["Lshift"] = True  
                 if event.key == pygame.K_r:
-                    self.action_keys["r_key"] = True         
+                    self.action_keys["key_r"] = True
+                if event.key == pygame.K_0:
+                    self.action_keys["key_0"] = True
+                if event.key == pygame.K_1:
+                    self.action_keys["key_1"] = True
+                if event.key == pygame.K_2:
+                    self.action_keys["key_2"] = True
+                if event.key == pygame.K_3:
+                    self.action_keys["key_3"] = True
+                if event.key == pygame.K_4:
+                    self.action_keys["key_4"] = True
+                if event.key == pygame.K_5:
+                    self.action_keys["key_5"] = True
+                if event.key == pygame.K_6:
+                    self.action_keys["key_6"] = True
+                if event.key == pygame.K_7:
+                    self.action_keys["key_7"] = True
+                if event.key == pygame.K_8:
+                    self.action_keys["key_8"] = True
+                if event.key == pygame.K_9:
+                    self.action_keys["key_9"] = True
 
             # KEYUP events
             if event.type == pygame.KEYUP:
@@ -126,7 +165,7 @@ class Game:
 
     # global update loop
     def update(self):
-        self.global_time = pygame.time.get_ticks()
+        self.global_time = pygame.time.get_ticks() / 1000.0 # convert to seconds
         # peek the top and update
         self.state_stack[-1].update(self.delta_time, self.action_keys)
 
@@ -142,7 +181,8 @@ class Game:
 
     # handle text drawing on screen
     def draw_text(self, surface, text, color, x, y):
-        text_surface = self.main_font.render(text, True, color)
+        main_font = self.assets[Fonts.TITLE]
+        text_surface = main_font.render(text, True, color)
         text_rect = text_surface.get_rect()
         text_rect.center = (x, y)
         surface.blit(text_surface, text_rect)
@@ -152,7 +192,67 @@ class Game:
         self.assets_dir = os.path.join("asset")
         self.sprite_dir = os.path.join(self.assets_dir, "sprites")
         self.font_dir = os.path.join(self.assets_dir, "fonts")
-        self.main_font = pygame.font.Font(os.path.join(self.font_dir, "retganon.ttf"), 18)
+
+        # categories:
+        # fonts
+        self.assets[Fonts.TITLE] = {}
+        # entities
+        self.assets[EntityType.PLAYER] = {}
+        self.assets[EntityType.CONVEYOR] = {}
+        # maps
+
+        # load fonts:
+        self.assets[Fonts.TITLE] = pygame.font.Font(os.path.join(self.font_dir, "retganon.ttf"), 18)
+        
+        # load sprites:
+        # player
+        self.assets[EntityType.PLAYER][Animation.RUN] = self.load_frames(
+            os.path.join(self.sprite_dir, "player_spritesheet.png"),
+            0, 0, 32, 46, 8
+        )
+
+        # conveyor belt
+        conveyor_horizontal = self.load_frames(
+            os.path.join(self.sprite_dir, "conveyor_spritesheet.png"),
+            0, 0, 32, 32, 5            
+        )
+        conveyor_vertical = self.load_frames(
+            os.path.join(self.sprite_dir, "conveyor_spritesheet.png"),
+            0, 64, 32, 32, 5
+        )
+        conveyor_corner = self.load_frames(
+            os.path.join(self.sprite_dir, "conveyor_spritesheet.png"),
+            0, 96, 32, 32, 5
+        )
+        conveyor_corner_f = [pygame.transform.flip(f, True, False) for f in conveyor_corner]
+
+        self.assets[EntityType.CONVEYOR][Animation.STRAIGHT] = {
+            Direction.NORTH : conveyor_vertical,
+            Direction.SOUTH : [pygame.transform.flip(f, False, True) for f in conveyor_vertical],
+            Direction.WEST : conveyor_horizontal,
+            Direction.EAST : [pygame.transform.flip(f, True, False) for f in conveyor_horizontal],
+        }
+        self.assets[EntityType.CONVEYOR][Animation.CORNER] = {
+            # clockwise:
+            Animation.BOTLEFT : conveyor_corner,
+            Animation.TOPLEFT : [pygame.transform.rotate(f, -90) for f in conveyor_corner],
+            Animation.TOPRIGHT : [pygame.transform.rotate(f, -180) for f in conveyor_corner],
+            Animation.BOTRIGHT : [pygame.transform.rotate(f, -270) for f in conveyor_corner],
+            # counter-clockwise:
+            Animation.BOTLEFT_F : [pygame.transform.rotate(f, -90) for f in conveyor_corner_f],
+            Animation.TOPLEFT_F : [pygame.transform.rotate(f, -180) for f in conveyor_corner],
+            Animation.TOPRIGHT_F : [pygame.transform.rotate(f, -270) for f in conveyor_corner],
+            Animation.BOTRIGHT_F : conveyor_corner_f
+        }
+
+    # helper method for loading assets:
+    def load_frames(self, filename, x, y, width, height, amount):
+        sprite_sheet = pygame.image.load(filename).convert_alpha()
+        frames = []
+        for i in range(amount):
+            frame = sprite_sheet.subsurface(pygame.Rect(x+(i*width), y, width, height))
+            frames.append(frame)
+        return frames        
 
     # starting game state, preferably 'Title Screen'
     def load_states(self):
@@ -163,8 +263,12 @@ class Game:
         self.state_stack.append(self.title_screen)
 
     # reset action key state to 'False'
-    def reset_keys(self, action):
-            self.action_keys[action] = False
+    def reset_key(self, action):
+        self.action_keys[action] = False
+
+    def reset_allkeys(self):
+        for key in self.action_keys:
+            self.action_keys[key] = False
 
 # entry point
 if __name__ == "__main__":

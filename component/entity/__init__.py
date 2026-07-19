@@ -1,6 +1,9 @@
 # playable entity
-from .player import Player
+from .player.player import PlayerEntity as Player
 # machine entities
-from .machines.belt import Belt
+from .machines.conveyor import Conveyor
+# resource entities
+from .resources.test_resource import TestResource
+
 # all entities
-__all__ = ["Player", "Belt"]
+__all__ = ["Player", "Conveyor", "TestResource"]

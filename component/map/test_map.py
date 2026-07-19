@@ -1,9 +1,9 @@
-from .map import BaseMap
+from .base import BaseMap
 import pygame
 
 class TestMap(BaseMap):
-    def __init__(self, game, group):
-        super().__init__(game, group, 19, 9)
+    def __init__(self, world):
+        super().__init__(19, 9, world)
         self.dark = (90, 100, 130)
         self.light = (115, 130, 170)
         self.rows = 9
@@ -18,10 +18,13 @@ class TestMap(BaseMap):
                 color = self.dark if (i+j) % 2 == 0 else self.light
                 # world and screen offset calculation:
                 # caclulate offset of each tile
-                world_x = j*self.game.TILE_WIDTH
-                world_y = i*self.game.TILE_HEIGHT
+                world_x = j*self.world.game.TILE_SIZE
+                world_y = i*self.world.game.TILE_SIZE
                 # calculate offset of each tile with respect to the camera
                 screen_x = world_x - camera.offset.x
                 screen_y = world_y - camera.offset.y
                 # draw the tile
-                pygame.draw.rect(display, color, (screen_x, screen_y, self.game.TILE_WIDTH, self.game.TILE_HEIGHT))
+                pygame.draw.rect(
+                    display, color, 
+                    (screen_x, screen_y, self.world.game.TILE_SIZE, self.world.game.TILE_SIZE)
+                )

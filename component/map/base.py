@@ -1,11 +1,18 @@
 from abc import ABC, abstractmethod
+from ..utils import EntityType
+from ..entity import *
+from pygame import Vector2
 
 # ABSTRACT CLASS FOR MAPS:
 class BaseMap(ABC):
-    def __init__(self, game, group, width, height):
-        self.game = game
+    ENTITY = {
+        EntityType.CONVEYOR : Conveyor
+    }
+
+    def __init__(self, width, height, world):
+        self.world = world
         # sprite groups for this world:
-        self.all_sprites = group
+        self.all_sprites = world.all_sprites
         # create base empty world map:
         # this is used for tracking which tile is occupied 
         self.grid = [[None for _ in range(height)] for _ in range(width)]
@@ -19,10 +26,16 @@ class BaseMap(ABC):
         # boundary check fail:
         return False
 
-    def add_entity(self, entity, x, y):
+    def place_entity(self, grid: Vector2, direction: Vector2, entity_type: EntityType):
         # check if grid is free:
+        x, y = int(grid.x), int(grid.y)
         if self.is_tile_free(x, y):
-            self.grid[x][y] = entity
+            self.grid[x][y] = self.ENTITY[entity_type](
+                grid * self.world.game.TILE_SIZE, # revert index back to world coordinates
+                direction,
+                self.world,
+                entity_type
+            )
             # tile was placed:
             return True
         # something's blocking the waaaay:
