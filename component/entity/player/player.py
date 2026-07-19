@@ -1,36 +1,35 @@
 import pygame
-from ..base_entity import BaseEntity
-from ...utils import Animation, EntityType
+from ..base import BaseEntity
+from ...utils import EntityType, Animation
 
-class Player(BaseEntity):
-    def __init__(self, x, y, world):
-        # initialize with parent class
-        super().__init__(world)
-        self.x, self.y = x, y
-        self.width, self.height = 64, 64
-        # player attributes
-        self.velocity = pygame.Vector2()
-        self.speed = 50
+class PlayerEntity(BaseEntity):
+    def __init__(self, position, world, entity_type: EntityType):
+        super().__init__(position, world, entity_type)
+        self.width, self.height = 64, 64        
+
         # sprite flags
         self.facing_right = False
         self.facing_back = False        
 
+        # animation settings:
         self.animations = {
             Animation.RUN : world.game.assets[EntityType.PLAYER][Animation.RUN]
-        }        
-
-        self.image = self.animations[Animation.RUN][0]
-        self.rect = self.image.get_rect(topleft=(x,y))
-
+        }
         self.animation_speed = 12
-        
+        self.image = self.animations[Animation.RUN][0]
+        self.rect = self.image.get_rect(topleft=(position.x,position.y))        
+
+        # player attributes
+        self.speed = 50
+
+
     def update(self, global_time, delta_time, actions):
         # input key actions
         self.handle_input(actions)
 
         # update position:
-        self.x += self.velocity.x * delta_time
-        self.y += self.velocity.y * delta_time
+        self.position.x += self.velocity.x * delta_time
+        self.position.y += self.velocity.y * delta_time
 
         frame = self.get_frame_animation(Animation.RUN, global_time)  
         if self.facing_right:
@@ -38,7 +37,8 @@ class Player(BaseEntity):
         self.image = frame
 
         # update bounding box:
-        self.rect.topleft = (round(self.x), round(self.y))
+        self.rect.topleft = (round(self.position.x), round(self.position.y))
+
 
     # player key inputs
     def handle_input(self, actions):
