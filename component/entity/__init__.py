@@ -1,5 +1,5 @@
 # playable entity
-from .player.player import Player
+from .player.player import PlayerEntity as Player
 # machine entities
 from .machines.conveyor import Conveyor
 # resource entities
