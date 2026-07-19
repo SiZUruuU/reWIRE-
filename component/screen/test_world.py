@@ -10,23 +10,24 @@ from ..utils import get_world_mousePos, EntityType
 class TestWorld(State):
     def __init__(self, game):
         super().__init__(game)
+        
+        self.all_sprites = pygame.sprite.LayeredUpdates()        
 
-        self.all_sprites = pygame.sprite.Group()        
         self.game = game
         self.map = TestMap(self)
 
         # initalize the player and camera (with camera type):
-        self.player = Player(game.GAME_WIDTH/2, game.GAME_HEIGHT/2, self)
+        self.player = Player(pygame.Vector2(game.GAME_WIDTH/2, game.GAME_HEIGHT/2), self, EntityType.PLAYER)
         self.camera = Camera(self.player, game.GAME_WIDTH, game.GAME_HEIGHT)
         self.camera.setmethod(Follow(self.camera, self.player))
 
         # entity data:
         self.directions = [
-                pygame.Vector2(-1, 0),
-                pygame.Vector2(0, -1),
-                pygame.Vector2(1, 0),
-                pygame.Vector2(0, 1)
-                           ]
+                pygame.Vector2(-1, 0), # left
+                pygame.Vector2(0, -1), # up
+                pygame.Vector2(1, 0), # right
+                pygame.Vector2(0, 1) # down
+        ] 
         
         self.dir_index = 0
         self.direction = self.directions[0]
@@ -36,14 +37,13 @@ class TestWorld(State):
         # hotbar use keys 1-9
         self.hotbar = [
             EntityType.CONVEYOR,
-            EntityType.NONE,
         ]
 
     def update(self, delta_time, actions):        
         # World related actions:
         self.handle_inputs(actions)        
 
-        # update all sprites in this world:
+        # update all sprites' data in this world:
         self.all_sprites.update(self.game.global_time, delta_time, actions)
         self.camera.scroll(delta_time)
 
@@ -54,8 +54,10 @@ class TestWorld(State):
         self.map.draw(display, self.camera)
 
         # render all sprites in this world:
+        # updated it with layering
         for sprite in self.all_sprites:
-            display.blit(sprite.image, (sprite.rect.x - self.camera.offset.x, sprite.rect.y - self.camera.offset.y))
+            camera = sprite.rect.topleft - self.camera.offset
+            display.blit(sprite.image, camera)
         
         # preview selected item:
         if self.selected_entity != EntityType.NONE:
@@ -89,15 +91,16 @@ class TestWorld(State):
 
         # handle object placement:
         if actions["LMB"] and self.selected_entity != EntityType.NONE:
+            location = pygame.Vector2(mouse['tile_x'], mouse['tile_y'])
             self.map.place_entity(
-                self.selected_entity, 
-                mouse['tile_x'], 
-                mouse['tile_y'], 
-                self.direction
+                location,
+                self.direction,
+                self.selected_entity
             )
             self.game.reset_key("LMB")
 
         # resource placement test:
         if actions["RMB"]:
-            TestResource(mouse['world_x'], mouse['world_y'], self)            
+            position = pygame.Vector2(mouse['world_x'], mouse['world_y'])
+            TestResource(position, self, EntityType.TEST_RESOURCE)
             self.game.reset_key("RMB")
