@@ -9,7 +9,7 @@ class BaseMap(ABC):
     }
 
     def __init__(self, width, height, world):
-        self.game = world.game
+        self.world = world
         # sprite groups for this world:
         self.all_sprites = world.all_sprites
         # create base empty world map:
