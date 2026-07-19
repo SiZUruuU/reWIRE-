@@ -20,19 +20,21 @@ class TestResource(BaseEntity):
 
     def update(self, global_time, delta_time, actions):
         # check tile on grid:
-        tile = check_tile_at(self.x, self.y, self.world.game, self.world.map.grid)
+        centerx = self.x + (self.rect.width/2)
+        centery = self.y + (self.rect.height/2)
+        tile = check_tile_at(centerx, centery, self.world.game, self.world.map.grid)
 
         # if tile has machine move resource:
         if not tile is None:
             # if there's a new direction snap it to align
             if tile.direction != self.direction:
-                tile_x = self.x//self.world.game.TILE_WIDTH * self.world.game.TILE_WIDTH 
-                tile_y = self.y//self.world.game.TILE_HEIGHT * self.world.game.TILE_HEIGHT
+                tile_x = self.x//self.world.game.TILE_SIZE * self.world.game.TILE_SIZE 
+                tile_y = self.y//self.world.game.TILE_SIZE * self.world.game.TILE_SIZE
 
                 if tile.direction.x != 0:
-                    self.y = tile_y + self.world.game.TILE_HEIGHT/2 - self.rect.height/2
+                    self.y = tile_y + self.world.game.TILE_SIZE/2 - self.rect.height/2
                 if tile.direction.y != 0:
-                    self.x = tile_x + self.world.game.TILE_WIDTH/2 - self.rect.width/2
+                    self.x = tile_x + self.world.game.TILE_SIZE/2 - self.rect.width/2
             self.direction = tile.direction
             self.velocity = self.direction * tile.speed
         else:
