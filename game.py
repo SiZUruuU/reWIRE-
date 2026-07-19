@@ -165,7 +165,7 @@ class Game:
 
     # global update loop
     def update(self):
-        self.global_time = pygame.time.get_ticks()
+        self.global_time = pygame.time.get_ticks() / 1000.0 # convert to seconds
         # peek the top and update
         self.state_stack[-1].update(self.delta_time, self.action_keys)
 
@@ -225,6 +225,7 @@ class Game:
             0, 96, 32, 32, 5
         )
         conveyor_corner_f = [pygame.transform.flip(f, True, False) for f in conveyor_corner]
+
         self.assets[EntityType.CONVEYOR][Animation.STRAIGHT] = {
             Direction.NORTH : conveyor_vertical,
             Direction.SOUTH : [pygame.transform.flip(f, False, True) for f in conveyor_vertical],
