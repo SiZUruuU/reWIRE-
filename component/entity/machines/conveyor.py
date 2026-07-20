@@ -1,5 +1,5 @@
-from .machine import MachineEntity
 from ...utils import EntityType, Animation, Direction
+from .machine import MachineEntity
 from pygame import Vector2
 
 class Conveyor(MachineEntity):
@@ -19,4 +19,4 @@ class Conveyor(MachineEntity):
 
     def update(self, global_time, delta_time, actions):
         # update animation
-        self.play_animation(global_time)
+        self.image = self.get_frame_animation(None, global_time)
