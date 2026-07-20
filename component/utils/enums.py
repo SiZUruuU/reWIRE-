@@ -18,7 +18,7 @@ class EntityType(Enum):
     NONE = ("none", None)
     PLAYER = ("player", Layers.FRONT_0)
     CONVEYOR = ("conveyor", Layers.FLOOR_0)
-    TEST_RESOURCE = ("test_resource", Layers.FLOOR_1)
+    RESOURCE = ("resource", Layers.FLOOR_1)
 
     def __init__(self, type, layer):
         self.type = type
@@ -29,6 +29,23 @@ class EntityType(Enum):
     @property
     def layer(self):
         return self._layer
+    
+class ResourceType(Enum):
+    WOOD = "wood"
+    BOARDS = "boards"
+
+    STONE = "stone"
+    STONE_BLOCKS = "stone_block"
+
+    SAND = "sand"
+    GLASS = "glass"
+
+    CHARCOAL = "charcoal"
+
+class ResourceState(Enum):
+    ON_BELT = auto()
+    HELD = auto()
+    PROCESSING = auto()
 
 class Animation(Enum):
     # for player:

@@ -4,7 +4,7 @@ import pygame
 
 # ABSTRACT CLASS FOR ENTITIES
 class BaseEntity(ABC, pygame.sprite.Sprite):
-    def __init__(self, position, world, entity_type: EntityType):
+    def __init__(self, position: pygame.Vector2, world, entity_type: EntityType):
         # weird bug I found, so to fix layering we need to set the ._layer first
         # before doing super().__init__()
         self._layer = entity_type.layer
@@ -25,13 +25,19 @@ class BaseEntity(ABC, pygame.sprite.Sprite):
     def update(self, global_time, delta_time, actions):
         pass
 
-    def play_animation(self, global_time):
-        total = len(self.animations)
-        frame = int(global_time * self.animation_speed) % total
-        self.image = self.animations[frame]
-    
     def get_frame_animation(self, state, global_time):
-        list = self.animations[state]
-        total = len(list)
-        frame = int(global_time * self.animation_speed) % total        
-        return list[frame]
+        # checks if there's only one animation type:
+        if state is None:
+            total = len(self.animations)
+            frame = int(global_time * self.animation_speed) % total
+            return self.animations[frame]
+        else:
+            frames = self.animations[state]
+            total = len(frames)
+            frame = int(global_time * self.animation_speed) % total
+            return frames[frame]
+
+
+    def set_layout(self, animation_type, key):
+        self.animations = self.world.game.assets[self.entity_type][animation_type][key]
+        self.image = self.animations[0]
