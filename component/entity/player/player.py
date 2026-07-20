@@ -1,5 +1,5 @@
 import pygame
-from ..base import BaseEntity
+from ..entity import BaseEntity
 from ...utils import EntityType, Animation
 
 class PlayerEntity(BaseEntity):
