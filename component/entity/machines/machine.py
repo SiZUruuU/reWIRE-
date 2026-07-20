@@ -1,4 +1,4 @@
-from ..base import BaseEntity
+from ..entity import BaseEntity
 from ...utils import EntityType
 from pygame import Vector2
 
