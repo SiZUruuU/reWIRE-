@@ -1,6 +1,6 @@
 import pygame, os, time
 from component.screen.title_screen import TitleScreen
-from component.utils import EntityType, Animation, Direction, Fonts
+from component.utils import EntityType, Animation, Direction, Fonts, ResourceType
 
 class Game:
     def __init__(self):
@@ -117,6 +117,8 @@ class Game:
                     self.action_keys["Lshift"] = True  
                 if event.key == pygame.K_r:
                     self.action_keys["key_r"] = True
+                if event.key == pygame.K_q:
+                    self.action_keys["key_q"] = True
                 if event.key == pygame.K_0:
                     self.action_keys["key_0"] = True
                 if event.key == pygame.K_1:
@@ -192,26 +194,30 @@ class Game:
         self.assets_dir = os.path.join("asset")
         self.sprite_dir = os.path.join(self.assets_dir, "sprites")
         self.font_dir = os.path.join(self.assets_dir, "fonts")
-
-        # categories:
-        # fonts
-        self.assets[Fonts.TITLE] = {}
-        # entities
-        self.assets[EntityType.PLAYER] = {}
-        self.assets[EntityType.CONVEYOR] = {}
-        # maps
-
+        
         # load fonts:
         self.assets[Fonts.TITLE] = pygame.font.Font(os.path.join(self.font_dir, "retganon.ttf"), 18)
         
-        # load sprites:
-        # player
-        self.assets[EntityType.PLAYER][Animation.RUN] = self.load_frames(
+        # load sprites
+        # player:
+        self.assets[EntityType.PLAYER] = {
+            Animation.RUN : self.load_frames(
             os.path.join(self.sprite_dir, "player_spritesheet.png"),
-            0, 0, 32, 46, 8
-        )
+            0, 0, 32, 46, 8)
+        }
 
-        # conveyor belt
+        # resources:
+        self.assets[EntityType.RESOURCE] = {
+            ResourceType.WOOD : self.load_frame(os.path.join(self.sprite_dir, "wood.png")),
+            ResourceType.BOARDS : self.load_frame(os.path.join(self.sprite_dir, "boards.png")),
+            ResourceType.CHARCOAL : self.load_frame(os.path.join(self.sprite_dir, "charcoal.png")),
+            ResourceType.STONE : self.load_frame(os.path.join(self.sprite_dir, "stone.png")),
+            ResourceType.STONE_BLOCKS : self.load_frame(os.path.join(self.sprite_dir, "stone_blocks.png")),
+            ResourceType.GLASS : self.load_frame(os.path.join(self.sprite_dir, "glass.png")),
+            ResourceType.SAND : self.load_frame(os.path.join(self.sprite_dir, "sand.png")),
+        }
+
+        # conveyor belt:
         conveyor_horizontal = self.load_frames(
             os.path.join(self.sprite_dir, "conveyor_spritesheet.png"),
             0, 0, 32, 32, 5            
@@ -226,23 +232,25 @@ class Game:
         )
         conveyor_corner_f = [pygame.transform.flip(f, True, False) for f in conveyor_corner]
 
-        self.assets[EntityType.CONVEYOR][Animation.STRAIGHT] = {
-            Direction.NORTH : conveyor_vertical,
-            Direction.SOUTH : [pygame.transform.flip(f, False, True) for f in conveyor_vertical],
-            Direction.WEST : conveyor_horizontal,
-            Direction.EAST : [pygame.transform.flip(f, True, False) for f in conveyor_horizontal],
-        }
-        self.assets[EntityType.CONVEYOR][Animation.CORNER] = {
-            # clockwise:
-            Animation.BOTLEFT : conveyor_corner,
-            Animation.TOPLEFT : [pygame.transform.rotate(f, -90) for f in conveyor_corner],
-            Animation.TOPRIGHT : [pygame.transform.rotate(f, -180) for f in conveyor_corner],
-            Animation.BOTRIGHT : [pygame.transform.rotate(f, -270) for f in conveyor_corner],
-            # counter-clockwise:
-            Animation.BOTLEFT_F : [pygame.transform.rotate(f, -90) for f in conveyor_corner_f],
-            Animation.TOPLEFT_F : [pygame.transform.rotate(f, -180) for f in conveyor_corner],
-            Animation.TOPRIGHT_F : [pygame.transform.rotate(f, -270) for f in conveyor_corner],
-            Animation.BOTRIGHT_F : conveyor_corner_f
+        self.assets[EntityType.CONVEYOR] = {
+            Animation.STRAIGHT : {
+                Direction.NORTH : conveyor_vertical,
+                Direction.SOUTH : [pygame.transform.flip(f, False, True) for f in conveyor_vertical],
+                Direction.WEST : conveyor_horizontal,
+                Direction.EAST : [pygame.transform.flip(f, True, False) for f in conveyor_horizontal],
+            },
+            Animation.CORNER : {
+                # clockwise:
+                Animation.BOTLEFT : conveyor_corner,
+                Animation.TOPLEFT : [pygame.transform.rotate(f, -90) for f in conveyor_corner],
+                Animation.TOPRIGHT : [pygame.transform.rotate(f, -180) for f in conveyor_corner],
+                Animation.BOTRIGHT : [pygame.transform.rotate(f, -270) for f in conveyor_corner],
+                # counter-clockwise:
+                Animation.BOTLEFT_F : [pygame.transform.rotate(f, -90) for f in conveyor_corner_f],
+                Animation.TOPLEFT_F : [pygame.transform.rotate(f, -180) for f in conveyor_corner_f],
+                Animation.TOPRIGHT_F : [pygame.transform.rotate(f, -270) for f in conveyor_corner_f],
+                Animation.BOTRIGHT_F : conveyor_corner_f
+            }
         }
 
     # helper method for loading assets:
@@ -252,7 +260,10 @@ class Game:
         for i in range(amount):
             frame = sprite_sheet.subsurface(pygame.Rect(x+(i*width), y, width, height))
             frames.append(frame)
-        return frames        
+        return frames
+    
+    def load_frame(self, filename):
+        return pygame.image.load(filename).convert_alpha()
 
     # starting game state, preferably 'Title Screen'
     def load_states(self):
