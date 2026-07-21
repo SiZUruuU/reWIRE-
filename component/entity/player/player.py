@@ -1,15 +1,18 @@
 import pygame
+
 from ..entity import BaseEntity
-from ...utils import EntityType, Animation
+from ..machines.conveyor import Conveyor
+from ...utils import EntityType, Animation, get_world_mousePos
 
 class PlayerEntity(BaseEntity):
     def __init__(self, position, world, entity_type: EntityType):
         super().__init__(position, world, entity_type)
-        self.width, self.height = 64, 64        
+        self.width, self.height = 64, 64
 
+        self.facing = pygame.Vector2(0, 1)
         # sprite flags
         self.facing_right = False
-        self.facing_back = False        
+        self.facing_back = False  
 
         # animation settings:
         self.animations = {
@@ -17,7 +20,9 @@ class PlayerEntity(BaseEntity):
         }
         self.animation_speed = 12
         self.image = self.animations[Animation.RUN][0]
-        self.rect = self.image.get_rect(topleft=(position.x,position.y))        
+        self.rect = self.image.get_rect(topleft=(self.position.x,self.position.y))
+
+        self.held_item = None  
 
         # player attributes
         self.speed = 50
@@ -39,6 +44,73 @@ class PlayerEntity(BaseEntity):
         # update bounding box:
         self.rect.topleft = (round(self.position.x), round(self.position.y))
 
+        # for holding items
+        if self.held_item is not None:
+            self.held_item.rect.midbottom = self.rect.midtop
+            self.held_item.position = pygame.Vector2(self.held_item.rect.center)
+
+    def try_interact(self, map, game, camera):
+        if self.held_item is not None:
+            self.try_drop(map, game, camera)
+        else:
+            self.try_pickup(map, game, camera)
+    
+    def try_drop(self, map, game, camera):
+        tile_x, tile_y = self.get_interact_tile(map, game, camera)
+        if tile_x is None:
+            return
+        
+        tile = map.grid[tile_x][tile_y] if map.is_tile_valid(tile_x, tile_y) else None
+
+        if tile is not None and tile.accept(self.held_item):
+            self.held_item = None
+            return
+
+        if tile is None and map.get_ground_item(tile_x, tile_y) is None:
+            snapped = pygame.Vector2(tile_x, tile_y) * game.TILE_SIZE + pygame.Vector2(game.TILE_SIZE/2, game.TILE_SIZE/2)
+            self.held_item.position = snapped
+            self.held_item.rect.center = (round(snapped.x), round(snapped.y))
+            map.map_ground_item(tile_x, tile_y, self.held_item)
+            self.held_item = None
+    
+    def try_pickup(self, map, game, camera):
+        tile_x, tile_y = self.get_interact_tile(map, game, camera)
+        if tile_x is None:
+            return
+
+        ground = map.get_ground_item(tile_x, tile_y)
+        if ground is not None:
+            self.held_item = ground
+            ground.take_resource(self)
+            map.clear_ground_item(tile_x, tile_y)
+            return
+
+        tile = map.grid[tile_x][tile_y] if map.is_tile_valid(tile_x, tile_y) else None
+
+        if isinstance(tile, Conveyor) and tile.items:
+            item = tile.items.pop(0)   # grab whichever is nearest the exit
+            self.held_item = item["resource"]
+            self.held_item.take_resource(self)
+            return
+
+        if hasattr(tile, "output_buffer") and tile.output_buffer is not None:
+            self.held_item = tile.output_buffer
+            tile.output_buffer = None
+            self.held_item.take_resource(self)
+
+    def get_interact_tile(self, map, game, camera):
+        mouse = get_world_mousePos(game, camera)
+        tile_x, tile_y = mouse['tile_x'], mouse['tile_y']
+
+        tile_size = game.TILE_SIZE
+        player_tile_x = int(self.rect.centerx // tile_size)
+        player_tile_y = int(self.rect.centery // tile_size)
+
+        # Chebyshev distance: allows straight and diagonal adjacency, both count as "1 tile away"
+        if max(abs(tile_x - player_tile_x), abs(tile_y - player_tile_y)) > 1:
+            return None, None
+
+        return tile_x, tile_y
 
     # player key inputs
     def handle_input(self, actions):
@@ -49,6 +121,7 @@ class PlayerEntity(BaseEntity):
             # y-axis: down = 1, up = -1
             actions["down"] - actions["up"]
         )
+        
         # change flag based on direction
         if direction.x > 0:
             self.facing_right = True
@@ -59,6 +132,7 @@ class PlayerEntity(BaseEntity):
             # normalize vector, basically clamp it from -1.0 to 1.0
             # so when pressing both "up" and "right" won't go beyond 1.0
             direction = direction.normalize()
+            self.facing = direction
 
         # finally update velocity:
         self.velocity = direction * self.speed
