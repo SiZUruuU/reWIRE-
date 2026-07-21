@@ -222,13 +222,10 @@ class Game:
             os.path.join(self.sprite_dir, "conveyor_spritesheet.png"),
             0, 0, 32, 32, 5            
         )
-        conveyor_vertical = self.load_frames(
-            os.path.join(self.sprite_dir, "conveyor_spritesheet.png"),
-            0, 64, 32, 32, 5
-        )
+        conveyor_vertical = [pygame.transform.rotate(f, 90) for f in conveyor_horizontal]
         conveyor_corner = self.load_frames(
             os.path.join(self.sprite_dir, "conveyor_spritesheet.png"),
-            0, 96, 32, 32, 5
+            0, 32, 32, 32, 5
         )
         conveyor_corner_f = [pygame.transform.flip(f, True, False) for f in conveyor_corner]
 
@@ -236,20 +233,34 @@ class Game:
             Animation.STRAIGHT : {
                 Direction.NORTH : conveyor_vertical,
                 Direction.SOUTH : [pygame.transform.flip(f, False, True) for f in conveyor_vertical],
-                Direction.WEST : conveyor_horizontal,
-                Direction.EAST : [pygame.transform.flip(f, True, False) for f in conveyor_horizontal],
+                Direction.EAST : conveyor_horizontal,
+                Direction.WEST : [pygame.transform.flip(f, True, False) for f in conveyor_horizontal],
             },
             Animation.CORNER : {
                 # clockwise:
-                Animation.BOTLEFT : conveyor_corner,
-                Animation.TOPLEFT : [pygame.transform.rotate(f, -90) for f in conveyor_corner],
-                Animation.TOPRIGHT : [pygame.transform.rotate(f, -180) for f in conveyor_corner],
-                Animation.BOTRIGHT : [pygame.transform.rotate(f, -270) for f in conveyor_corner],
+                Animation.BOTRIGHT : [pygame.transform.rotate(f, 90) for f in conveyor_corner_f],
+                Animation.TOPLEFT : [pygame.transform.rotate(f, -90) for f in conveyor_corner_f],
+                Animation.TOPRIGHT : [pygame.transform.rotate(f, -180) for f in conveyor_corner_f],
+                Animation.BOTLEFT : conveyor_corner_f,
                 # counter-clockwise:
-                Animation.BOTLEFT_F : [pygame.transform.rotate(f, -90) for f in conveyor_corner_f],
-                Animation.TOPLEFT_F : [pygame.transform.rotate(f, -180) for f in conveyor_corner_f],
-                Animation.TOPRIGHT_F : [pygame.transform.rotate(f, -270) for f in conveyor_corner_f],
-                Animation.BOTRIGHT_F : conveyor_corner_f
+                Animation.TOPLEFT_F : [pygame.transform.rotate(f, 180) for f in conveyor_corner],
+                Animation.BOTLEFT_F : [pygame.transform.rotate(f, 270) for f in conveyor_corner],
+                Animation.TOPRIGHT_F : [pygame.transform.rotate(f, 90) for f in conveyor_corner],
+                Animation.BOTRIGHT_F : conveyor_corner
+            }
+        }
+
+        # buzzsaw:
+        buzzsaw = self.load_frames(
+            os.path.join(self.assets_dir, "buzzsaw_spritesheet.png"),
+            0, 0, 32, 32, 5
+        )
+        self.assets[EntityType.BUZZSAW] = {
+            Animation.STRAIGHT : {
+                Direction.NORTH : [pygame.transform.rotate(f, -90) for f in buzzsaw],
+                Direction.SOUTH : [pygame.transform.rotate(f, 90) for f in buzzsaw],
+                Direction.EAST : buzzsaw,
+                Direction.WEST : [pygame.transform.flip(f, True, False) for f in buzzsaw],
             }
         }
 
