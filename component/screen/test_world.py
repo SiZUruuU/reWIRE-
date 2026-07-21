@@ -4,7 +4,7 @@ from .states import State
 from ..map.test_map import TestMap
 from ..camera import Camera, Follow
 from ..entity import Player, ResourceEntity
-from ..utils import get_world_mousePos, EntityType, Animation, Direction, ResourceType
+from ..utils import get_world_mousePos, EntityType, Animation, Direction, ResourceType, check_tile_at
 
 # TESTING FOR FEATURES
 class TestWorld(State):
@@ -37,6 +37,7 @@ class TestWorld(State):
         # hotbar use keys 1-9
         self.hotbar = [
             EntityType.CONVEYOR,
+            EntityType.BUZZSAW,
         ]
 
     def update(self, delta_time, actions):        
@@ -62,6 +63,9 @@ class TestWorld(State):
         # preview selected item:
         if self.selected_entity != EntityType.NONE:
             self.draw_placement_preview(display)
+        
+        # tile interaction highlight:
+        self.draw_interact_highlight(display)
 
 
     def handle_inputs(self, actions):                
@@ -83,15 +87,12 @@ class TestWorld(State):
 
         # handle rotation data:
         if actions["key_r"]:
-            self.dir_index += 1
-            self.dir_index = self.dir_index % 4
+            if actions["Lshift"]:
+                self.dir_index -= 1
+            else:
+                self.dir_index += 1
+            self.dir_index %= 4
             self.direction = self.directions[self.dir_index]
-            self.game.reset_key("key_r")
-        if actions["Lshift"] and actions["key_r"]:
-            self.dir_index -= 1
-            self.dir_index = self.dir_index % 4
-            self.direction = self.directions[self.dir_index]
-            self.game.reset_key("Lshift")
             self.game.reset_key("key_r")
 
         # handle object placement:
@@ -108,8 +109,19 @@ class TestWorld(State):
         # resource placement test:
         if actions["RMB"]:
             position = pygame.Vector2(mouse['world_x'], mouse['world_y'])
-            ResourceEntity(position, self, EntityType.RESOURCE, ResourceType.WOOD)
+            resource = ResourceEntity(position, self, EntityType.RESOURCE, ResourceType.WOOD)
+            self.map.map_ground_item(int(position.x//self.game.TILE_SIZE), int(position.y//self.game.TILE_SIZE), resource)
+            #print(f"DROPPED tile=({mouse['tile_x']},{mouse['tile_y']}) items={self.map.ground_items}")
+            tile = check_tile_at(position.x, position.y, self.game, self.map.grid)
+            if tile is not None:
+                tile.accept(resource)            
             self.game.reset_key("RMB")
+        
+        # player take or drop resource:
+        if actions["space"]:
+            self.player.try_interact(self.map, self.game, self.camera)
+            #print(f"dir:{self.player.facing}, held:{self.player.held_item}")
+            self.game.reset_key("space")
 
     # shows green or red tinted entity ghost:
     def draw_placement_preview(self, display):
@@ -138,7 +150,25 @@ class TestWorld(State):
         # finally show the item's ghost:
         screen_x = mouse['world_x'] - self.camera.offset.x
         screen_y = mouse['world_y'] - self.camera.offset.y
-        display.blit(preview, (screen_x, screen_y))        
+        display.blit(preview, (screen_x, screen_y))
+
+    def draw_interact_highlight(self, display):
+        tile_x, tile_y = self.player.get_interact_tile(self.map, self.game, self.camera)
+        if tile_x is None:
+            return
+
+        tile_size = self.game.TILE_SIZE
+        has_item = self.map.get_ground_item(tile_x, tile_y) is not None
+        tile = self.map.grid[tile_x][tile_y] if self.map.is_tile_valid(tile_x, tile_y) else None
+        has_output = hasattr(tile, "output_buffer") and tile.output_buffer is not None
+        color = (255, 255, 0, 90) if (has_item or has_output) else (255, 255, 255, 40)
+
+        screen_x = tile_x * tile_size - self.camera.offset.x
+        screen_y = tile_y * tile_size - self.camera.offset.y
+
+        highlight = pygame.Surface((tile_size, tile_size), pygame.SRCALPHA)
+        highlight.fill(color)
+        display.blit(highlight, (screen_x, screen_y))
 
     def get_preview_sprite(self, entity_type: EntityType, direction: pygame.Vector2):
         assets = self.game.assets.get(entity_type)
