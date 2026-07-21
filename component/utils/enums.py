@@ -17,8 +17,11 @@ class Layers(Enum):
 class EntityType(Enum):
     NONE = ("none", None)
     PLAYER = ("player", Layers.FRONT_0)
-    CONVEYOR = ("conveyor", Layers.FLOOR_0)
+    CONVEYOR = ("conveyor", Layers.FLOOR_0)    
     RESOURCE = ("resource", Layers.FLOOR_1)
+    BUZZSAW = ("buzzsaw", Layers.MIDDLE_0)
+    CRUSHER = ("cruhser", Layers.MIDDLE_0)
+    FURNACE = ("furnace", Layers.MIDDLE_0)
 
     def __init__(self, type, layer):
         self.type = type
@@ -41,12 +44,7 @@ class ResourceType(Enum):
     GLASS = "glass"
 
     CHARCOAL = "charcoal"
-
-class ResourceState(Enum):
-    ON_BELT = auto()
-    HELD = auto()
-    PROCESSING = auto()
-
+    
 class Animation(Enum):
     # for player:
     IDLE = auto()
