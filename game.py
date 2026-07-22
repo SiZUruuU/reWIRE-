@@ -214,8 +214,11 @@ class Game:
         # player:
         self.assets[EntityType.PLAYER] = {
             Animation.RUN : self.load_frames(
-            os.path.join(self.sprite_dir, "player_spritesheet.png"),
-            0, 0, 32, 46, 8)
+                os.path.join(self.sprite_dir, "player_spritesheet.png"),
+                0, 46, 32, 46, 8),
+            Animation.IDLE : self.load_frames(
+                os.path.join(self.sprite_dir, "player_spritesheet.png"),
+                0, 46*2, 32, 46, 5),
         }
 
         # resources:
@@ -287,6 +290,30 @@ class Game:
                 Direction.SOUTH : [pygame.transform.rotate(f, -90) for f in crusher],
                 Direction.EAST : buzzsaw,
                 Direction.WEST : [pygame.transform.flip(f, True, False) for f in crusher],
+            }
+        }
+
+        # furnace
+        furnace = self.load_frames(
+            os.path.join(self.sprite_dir, "furnace_spritesheet.png"),
+            0, 0, 34, 64, 3
+        )
+        furnace_f = self.load_frames(
+            os.path.join(self.sprite_dir, "furnace_spritesheet.png"),
+            0, 64, 34, 64, 3
+        )
+        self.assets[EntityType.FURNACE] = {
+            Animation.STRAIGHT : {
+                Direction.NORTH : [pygame.transform.rotate(f, -270) for f in furnace],
+                Direction.SOUTH : [pygame.transform.rotate(f, -180) for f in furnace],
+                Direction.EAST : [pygame.transform.rotate(f, -90) for f in furnace],
+                Direction.WEST : furnace,
+            },
+            Animation.ACTIVE : {
+                Direction.NORTH : [pygame.transform.rotate(f, -270) for f in furnace_f],
+                Direction.SOUTH : [pygame.transform.rotate(f, -180) for f in furnace_f],
+                Direction.EAST : [pygame.transform.rotate(f, -90) for f in furnace_f],
+                Direction.WEST : furnace_f,
             }
         }
 
