@@ -265,7 +265,7 @@ class Game:
                 Animation.TOPRIGHT_F : [pygame.transform.rotate(f, 90) for f in conveyor_corner],
                 Animation.BOTRIGHT_F : conveyor_corner
             }
-        }
+        }        
 
         # buzzsaw:
         buzzsaw = self.load_frames(
@@ -330,6 +330,21 @@ class Game:
                 Direction.SOUTH: sellbox_frame,
                 Direction.EAST: sellbox_frame,
                 Direction.WEST: sellbox_frame,
+            }
+        }
+
+        # wood generator
+        wood_gen = self.load_frames(
+            os.path.join(self.sprite_dir, "wood_generator_spritesheet.png"),
+            0, 0, 64, 34, 3
+        )
+
+        self.assets[EntityType.WOOD_GENERATOR ] = {
+            Animation.STRAIGHT: {
+                Direction.NORTH: [pygame.transform.rotate(f, -90) for f in wood_gen],
+                Direction.SOUTH: [pygame.transform.rotate(f, 90) for f in wood_gen],
+                Direction.EAST: [pygame.transform.flip(f, True, False) for f in wood_gen],
+                Direction.WEST: wood_gen,
             }
         }
 
