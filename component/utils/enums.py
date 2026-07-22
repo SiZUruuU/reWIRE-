@@ -17,11 +17,21 @@ class Layers(Enum):
 class EntityType(Enum):
     NONE = ("none", None)
     PLAYER = ("player", Layers.FRONT_0)
-    CONVEYOR = ("conveyor", Layers.FLOOR_0)    
+
+    CONVEYOR = ("conveyor", Layers.FLOOR_0)
+
     RESOURCE = ("resource", Layers.FLOOR_1)
+
     BUZZSAW = ("buzzsaw", Layers.MIDDLE_0)
     CRUSHER = ("cruhser", Layers.MIDDLE_0)
     FURNACE = ("furnace", Layers.MIDDLE_0)
+
+    GENERATOR = ("generator", Layers.MIDDLE_1)
+    WOOD_GENERATOR = ("wood_generator", Layers.MIDDLE_1)
+    STONE_GENERATOR = ("stone_generator", Layers.MIDDLE_1)
+
+    # special dev item, 999 robux
+    SELLBOX = ("sellbox", Layers.FLOOR_0)
 
     def __init__(self, type, layer):
         self.type = type
