@@ -34,9 +34,13 @@ class Game:
             "Lshift":False,
             "LMB":False,
             "RMB":False,
+
             "key_b":False, #Build mode
             "key_r":False, #Conveyer rotate key
             "key_q":False, #Clear hotbar key
+            "key_f":False, #Item spawn test key WOOD
+            "key_g":False, #Item spawn test key STONE
+
             "key_1":False,
             "key_2":False,
             "key_3":False,
@@ -97,7 +101,7 @@ class Game:
                 if event.button == 3:
                     self.action_keys["RMB"] = False                    
                 
-            # KEYDOWN events                
+            # KEYDOWN events
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     self.isPlaying = False
@@ -121,6 +125,14 @@ class Game:
                     self.action_keys["key_q"] = True
                 if event.key == pygame.K_0:
                     self.action_keys["key_0"] = True
+                
+                # item spawn test
+                if event.key == pygame.K_f:
+                    self.action_keys["key_f"] = True
+                if event.key == pygame.K_g:
+                    self.action_keys["key_g"] = True
+
+                # number keys
                 if event.key == pygame.K_1:
                     self.action_keys["key_1"] = True
                 if event.key == pygame.K_2:
@@ -252,15 +264,29 @@ class Game:
 
         # buzzsaw:
         buzzsaw = self.load_frames(
-            os.path.join(self.assets_dir, "buzzsaw_spritesheet.png"),
-            0, 0, 32, 32, 5
+            os.path.join(self.sprite_dir, "buzzsaw_spritesheet.png"),
+            0, 0, 34, 32, 5
         )
         self.assets[EntityType.BUZZSAW] = {
             Animation.STRAIGHT : {
-                Direction.NORTH : [pygame.transform.rotate(f, -90) for f in buzzsaw],
-                Direction.SOUTH : [pygame.transform.rotate(f, 90) for f in buzzsaw],
+                Direction.NORTH : [pygame.transform.rotate(f, 90) for f in buzzsaw],
+                Direction.SOUTH : [pygame.transform.rotate(f, -90) for f in buzzsaw],
                 Direction.EAST : buzzsaw,
                 Direction.WEST : [pygame.transform.flip(f, True, False) for f in buzzsaw],
+            }
+        }
+
+        #crusher
+        crusher = self.load_frames(
+            os.path.join(self.sprite_dir, "crusher_spritesheet.png"),
+            0, 0, 34, 32, 15
+        )
+        self.assets[EntityType.CRUSHER] = {
+            Animation.STRAIGHT : {
+                Direction.NORTH : [pygame.transform.rotate(f, 90) for f in crusher],
+                Direction.SOUTH : [pygame.transform.rotate(f, -90) for f in crusher],
+                Direction.EAST : buzzsaw,
+                Direction.WEST : [pygame.transform.flip(f, True, False) for f in crusher],
             }
         }
 
