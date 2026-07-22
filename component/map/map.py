@@ -28,6 +28,7 @@ class BaseMap(ABC):
         EntityType.BUZZSAW : Buzzsaw,
         EntityType.CRUSHER : Crusher,
         EntityType.FURNACE : Furnace,
+        EntityType.SELLBOX : SellBox,
     }
 
     def __init__(self, width, height, world):
