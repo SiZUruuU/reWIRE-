@@ -16,12 +16,13 @@ class PlayerEntity(BaseEntity):
 
         # animation settings:
         self.animations = {
-            Animation.RUN : world.game.assets[EntityType.PLAYER][Animation.RUN]
+            Animation.RUN : world.game.assets[EntityType.PLAYER][Animation.RUN],
+            Animation.IDLE : world.game.assets[EntityType.PLAYER][Animation.IDLE]
         }
         self.animation_speed = 12
         self.image = self.animations[Animation.RUN][0]
         self.rect = self.image.get_rect(topleft=(self.position.x,self.position.y))
-
+        self.state = Animation.IDLE
         self.held_item = None  
 
         # player attributes
@@ -36,7 +37,9 @@ class PlayerEntity(BaseEntity):
         self.position.x += self.velocity.x * delta_time
         self.position.y += self.velocity.y * delta_time
 
-        frame = self.get_frame_animation(Animation.RUN, global_time)  
+        self.update_state()
+
+        frame = self.get_frame_animation(self.state, global_time)  
         if self.facing_right:
             frame = pygame.transform.flip(frame, True, False)
         self.image = frame
@@ -48,6 +51,9 @@ class PlayerEntity(BaseEntity):
         if self.held_item is not None:
             self.held_item.rect.midbottom = self.rect.midtop
             self.held_item.position = pygame.Vector2(self.held_item.rect.center)
+
+    def update_state(self):
+        self.state = Animation.RUN if self.velocity.length_squared() > 0 else Animation.IDLE
 
     def try_interact(self, map, game, camera):
         if self.held_item is not None:
