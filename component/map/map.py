@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 
 from ..utils import EntityType, Animation, Direction
 from ..entity import *
+from ..entity.machines.machine import MachineEntity
 from pygame import Vector2
 
 # Dict for corner coords to animation sprite:
@@ -131,8 +132,9 @@ class BaseMap(ABC):
             return
         # grab the current belt:
         tile = self.grid[x][y]
+        # plausible instances:
         if not isinstance(tile, Conveyor):
-            return
+            return        
         # grab its direction:
         tile_dir = (int(tile.direction.x), int(tile.direction.y))
         # upstream tile is the neighboring tile
@@ -145,7 +147,7 @@ class BaseMap(ABC):
             if self.is_tile_valid(nx, ny):
                 neighbor = self.grid[nx][ny]
                 # if it's a belt grab its direction to know where its moving from:
-                if isinstance(neighbor, Conveyor):
+                if isinstance(neighbor, MachineEntity):
                     n_dir = (int(neighbor.direction.x), int(neighbor.direction.y))
                     # if the direction it is moving towards is the current belt:
                     if nx + n_dir[0] == x and ny + n_dir[1] == y:
