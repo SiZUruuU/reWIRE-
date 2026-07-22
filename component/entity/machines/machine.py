@@ -4,11 +4,15 @@ from pygame import Vector2
 
 class MachineEntity(BaseEntity):
     # important! when making machines that are bigger than 1x1, make sure
-    # to create the footprint here before passing to __init__
+    # to create the footprint data here before passing to __init__
     FOOTPRINT = (1, 1)
+    PORT_MAP = {(0, 0): "material"}
+    OUTPUT_OFFSET = (0, 0)
     def __init__(self, position: Vector2, direction: Vector2, world, entity_type: EntityType):
         super().__init__(position, world, entity_type)
         self.footprint = self.FOOTPRINT # how much tiles the machine takes up
+        self.port_map = self.PORT_MAP
+        self.output_offset = self.OUTPUT_OFFSET
         self.direction = direction
         dir_key = Direction((int(direction.x), int(direction.y)))
         self.animations = self.world.game.assets[entity_type][Animation.STRAIGHT][dir_key]
@@ -21,9 +25,10 @@ class MachineEntity(BaseEntity):
         # Overrided by sub classes:
         self.input_buffer = {"material": None}
         self.output_buffer = None
-        
-        self.entry = self.position + Vector2(self.width, self.height/2)
-        self.exit = self.position + Vector2(0, self.height/2)
+
+        size = self.world.game.TILE_SIZE
+        self.entry = self.position + Vector2(fw * size, fh * size/2 )
+        self.exit = self.position + Vector2(0, fh * size/2)
 
         self.recipes = {}
         self.process_time = 0.0
@@ -44,7 +49,8 @@ class MachineEntity(BaseEntity):
             return False
         return resource.resource_type in self.recipes
 
-    def accept(self, resource, port="material"):
+    def accept(self, resource, tile_x=None, tile_y=None):
+        port = self.get_port(tile_x, tile_y)
         if not self.can_accept(resource, port):
             return False
         self.input_buffer[port] = resource
@@ -110,20 +116,38 @@ class MachineEntity(BaseEntity):
         if self.output_buffer is None:
             return
         # if there is, check if the output tile is open:
-        output_position = self.position + self.direction * self.world.game.TILE_SIZE
+        output_position = self.get_output_position()
+        size = self.world.game.TILE_SIZE
+        tile_x = int(output_position.x // size)
+        tile_y = int(output_position.y // size)
         infront =  check_tile_at(
             output_position.x, output_position.y, 
             self.world.game, self.world.map.grid
         )
         if infront is None:
-            return        
+            return
         # if it is, release the BABY:
-        if infront.accept(self.output_buffer):
+        if infront.accept(self.output_buffer, tile_x, tile_y):
             self.output_buffer = None
+
+    # new port checking feature for multi port machines:
+    def get_port(self, tile_x, tile_y):
+        if tile_x is None or tile_y is None:
+            return next(iter(self.port_map.values()))
+        size = self.world.game.TILE_SIZE
+        origin_x = int(self.position.x // size)
+        origin_y = int(self.position.y // size)
+        offset = (tile_x - origin_x, tile_y - origin_y)
+        return self.port_map.get(offset, "material")
+
+    def get_output_position(self):
+        size = self.world.game.TILE_SIZE
+        origin = self.position + Vector2(self.output_offset[0]*size, self.output_offset[1]*size)
+        return origin + self.direction * size
 
     
     def apply_direction(self, direction):
         self.direction = direction
         dir_key = Direction((int(direction.x), int(direction.y)))
         self.animations = self.world.game.assets[self.entity_type][Animation.STRAIGHT][dir_key]
-        self.image = self.animations[0]
+        self.image = self.animations[0]        

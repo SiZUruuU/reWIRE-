@@ -37,18 +37,19 @@ class Conveyor(MachineEntity):
     def try_pass(self):
         head = self.items[0]
         offset_point = self.exit + self.direction * 1
+        size = self.world.game.TILE_SIZE
+        tile_x = int(offset_point.x // size)
+        tile_y = int(offset_point.y // size)
         next = check_tile_at(
             offset_point.x, offset_point.y,
             self.world.game, self.world.map.grid
         )
-
         if next is None:
             return
-        
-        if next.accept(head["resource"]):
+        if next.accept(head["resource"], tile_x, tile_y):
             self.items.pop(0)
     
-    def accept(self, resource, port=None):
+    def accept(self, resource, tile_x=None, tile_y=None):
         if self.items and self.items[-1]["progress"] < self.min_gap:
             return False
         item = {

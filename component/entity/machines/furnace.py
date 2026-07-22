@@ -1,5 +1,6 @@
 from ...utils import ResourceType, EntityType, Animation, Layers, Direction
 from .machine import MachineEntity
+from pygame import Vector2
 
 # this machine needs two inputs a fuel source and the processable source
 # input1:fuel input2:material = output:metals,glass,charcoal
@@ -13,11 +14,19 @@ class Furnace(MachineEntity):
     # important! when making machines that are bigger than 1x1, make sure
     # to create the footprint here before passing to __init__
     FOOTPRINT = (1, 2)
+    PORT_MAP = {
+        (0, 0): "fuel",
+        (0, 1): "material",        
+    }
+    OUTPUT_OFFSET = (0, 1)
+
     def __init__(self, position, direction, world, entity_type):       
         super().__init__(position, direction, world, entity_type)
         self.footprint = self.FOOTPRINT
         self.width, self.height = 32, 64
         self.animation_speed = 2.5 # in seconds
+        self.entry = self.entry + Vector2(0, self.world.game.TILE_SIZE/2)
+        self.exit = self.exit + Vector2(0, self.world.game.TILE_SIZE/2)
 
         self.input_buffer = {
             "fuel": None, "material": None
@@ -40,18 +49,16 @@ class Furnace(MachineEntity):
         }         
         self.image = self.animations[Animation.INACTIVE][0]
     
-    def can_accept(self, resource, port=None):
-        if port is None:
-            port = "fuel" if resource.resource_type in FUEL_VALUES else "material"
+    def can_accept(self, resource, port):
         if self.input_buffer.get(port) is not None:
             return False
         if port == "fuel":
             return resource.resource_type in FUEL_VALUES
         return resource.resource_type in self.recipes
     
-    def accept(self, resource, port=None):
-        if port is None:
-            port = "fuel" if resource.resource_type in FUEL_VALUES else "material"
+    def accept(self, resource, tile_x=None, tile_y=None):
+        port = self.get_port(tile_x, tile_y)
+        print(f"ACCEPT: resource={resource.resource_type} tile=({tile_x},{tile_y}) resolved_port={port} can_accept={self.can_accept(resource, port)}")
         if not self.can_accept(resource, port):
             return False
         self.input_buffer[port] = resource
