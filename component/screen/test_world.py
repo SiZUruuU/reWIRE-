@@ -39,6 +39,7 @@ class TestWorld(State):
             EntityType.CONVEYOR,
             EntityType.BUZZSAW,
             EntityType.CRUSHER,
+            EntityType.FURNACE,
         ]
 
     def update(self, delta_time, actions):        
