@@ -16,6 +16,8 @@ class BaseEntity(ABC, pygame.sprite.Sprite):
         # Default values, override if you want to
         self.image = pygame.Surface((world.game.TILE_SIZE, world.game.TILE_SIZE))
         self.rect = self.image.get_rect(topleft=(position.x, position.y))
+        self.width = self.image.get_width()
+        self.height = self.image.get_height()
         
         self.animations = {}
         self.current_frame = 0
