@@ -8,8 +8,6 @@ class Buzzsaw(MachineEntity):
     def __init__(self, position, direction, world, entity_type):
         super().__init__(position, direction, world, entity_type)
         self.width, self.height = 32, 32
-        self.speed = 20        
-       
         self.animation_speed = 7.5 # in seconds
         self.recipes = {
             ResourceType.WOOD: {
