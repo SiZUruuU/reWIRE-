@@ -209,6 +209,7 @@ class Game:
         
         # load fonts:
         self.assets[Fonts.TITLE] = pygame.font.Font(os.path.join(self.font_dir, "retganon.ttf"), 18)
+        self.assets[Fonts.BODY] = pygame.font.Font(os.path.join(self.font_dir, "reindeer-typewriter.ttf"), 8)
         
         # load sprites
         # player:
@@ -304,9 +305,9 @@ class Game:
         )
         self.assets[EntityType.FURNACE] = {
             Animation.STRAIGHT : {
-                Direction.NORTH : [pygame.transform.rotate(f, -270) for f in furnace],
-                Direction.SOUTH : [pygame.transform.rotate(f, -180) for f in furnace],
-                Direction.EAST : [pygame.transform.rotate(f, -90) for f in furnace],
+                Direction.NORTH : [pygame.transform.rotate(f, -90) for f in furnace],
+                Direction.SOUTH : [pygame.transform.rotate(f, 90) for f in furnace],
+                Direction.EAST : [pygame.transform.flip(f, True, False) for f in furnace],
                 Direction.WEST : furnace,
             },
             Animation.ACTIVE : {
