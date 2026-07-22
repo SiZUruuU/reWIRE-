@@ -6,15 +6,30 @@ from ..camera import Camera, Follow
 from ..entity import Player, ResourceEntity
 from ..utils import get_world_mousePos, EntityType, Animation, Direction, ResourceType, check_tile_at, Fonts
 
-# TESTING FOR FEATURES
+## THIS IS A TESTING WORLD TO TEST FEATURES AND THEORIES ##
+# Use this world as reference in making other levels as all
+# features is applied in this class
+
+# A world or level is composed of components of different varieties
+# MAP components holds the value of where each entity should be 
+# ENTITIES are components that does something based off of their script (includes PLAYER, MACHINES, etc)
+# CAMERA components acts as a viewport for the world REMEMBER TO APPLY CAMERA OFFSET IN DISPLAY TO AVOID 
+# WRONG DISPLAY OF OBJECTS. (ex. object_position = some_value - camera.offset)
+# UTILS are useful for the Enums and a few screen to world coordinates methods such as get_world_mousePos
+
 class TestWorld(State):
     def __init__(self, game):
         super().__init__(game)
-        
+
+        # world values
+        self.cash = 0
+
+        # sprite groups to group all sprites with layer feature
         self.all_sprites = pygame.sprite.LayeredUpdates()        
 
+        # copy of the entry point
         self.game = game
-        self.map = TestMap(self)
+        self.map = TestMap(self) # map, be advised every placable is only tracked inside a map's grid        
 
         # initalize the player and camera (with camera type):
         self.player = Player(pygame.Vector2(game.GAME_WIDTH/2, game.GAME_HEIGHT/2), self, EntityType.PLAYER)
@@ -40,6 +55,7 @@ class TestWorld(State):
             EntityType.BUZZSAW,
             EntityType.CRUSHER,
             EntityType.FURNACE,
+            EntityType.SELLBOX, # DO NOT ADD TO FINAL GAME WORLD
         ]
 
     ## LOGIC RELATED METHODS ##
@@ -90,7 +106,7 @@ class TestWorld(State):
         # resource placement test:
         if actions["key_f"]:
             position = pygame.Vector2(mouse['world_x'], mouse['world_y'])
-            resource = ResourceEntity(position, self, EntityType.RESOURCE, ResourceType.WOOD)
+            resource = ResourceEntity(position, self, ResourceType.WOOD)
             
             tile = check_tile_at(position.x, position.y, self.game, self.map.grid)
             if tile is not None and tile.accept(resource):
@@ -105,7 +121,7 @@ class TestWorld(State):
 
         if actions["key_g"]:
             position = pygame.Vector2(mouse['world_x'], mouse['world_y'])
-            resource = ResourceEntity(position, self, EntityType.RESOURCE, ResourceType.STONE)
+            resource = ResourceEntity(position, self, ResourceType.STONE)
             
             tile = check_tile_at(position.x, position.y, self.game, self.map.grid)
             if tile is not None and tile.accept(resource):
@@ -126,7 +142,7 @@ class TestWorld(State):
 
 
     ## DISPLAY RELATED METHODS ##
-
+    # main render method, call any rendering here
     def render(self, display):
         display.fill((50, 60, 90))
 
@@ -149,7 +165,11 @@ class TestWorld(State):
         # ground item count:
         self.draw_item_count(display)
 
-    # shows green or red tinted entity ghost:
+        # cash amount:
+        self.draw_cash_display(display)
+
+    # shows green or red tinted entity ghost preview
+    # red = invalid, green = valid
     def draw_placement_preview(self, display):
         mouse = get_world_mousePos(self.game, self.camera)
         tile_x = mouse['tile_x']
@@ -178,6 +198,8 @@ class TestWorld(State):
         screen_y = mouse['world_y'] - self.camera.offset.y
         display.blit(preview, (screen_x, screen_y))
 
+    # shows where the interactable range is by highlighting the tile
+    # if a tile is highlighted any interaction actions will work
     def draw_interact_highlight(self, display):
         tile_x, tile_y = self.player.get_interact_tile(self.map, self.game, self.camera)
         if tile_x is None:
@@ -196,6 +218,7 @@ class TestWorld(State):
         highlight.fill(color)
         display.blit(highlight, (screen_x, screen_y))
 
+    # when equipping a machine, shows the current machine and direction it is facing
     def get_preview_sprite(self, entity_type: EntityType, direction: pygame.Vector2):
         assets = self.game.assets.get(entity_type)
         if not assets:
@@ -210,6 +233,7 @@ class TestWorld(State):
             return None
         return frames[0]
 
+    # adds a floating text near the item on the floor that shows how many are there 
     def draw_item_count(self, display):
         size = self.game.TILE_SIZE
         font = self.game.assets[Fonts.BODY]
@@ -226,3 +250,14 @@ class TestWorld(State):
             bg.fill((0, 0, 0, 150))
             display.blit(bg, (text_rect.x - 2, text_rect.y - 1))
             display.blit(text, text_rect)
+
+    # displays cash amount
+    def draw_cash_display(self, display):
+        font = self.game.assets[Fonts.HEADER]
+        text = font.render(f"${self.cash}", True, (100, 255, 100))
+        text_rect = text.get_rect(topleft=(10,10))
+
+        bg = pygame.Surface((text_rect.width + 16, text_rect.height + 10), pygame.SRCALPHA)
+        bg.fill((0, 0, 0, 150))
+        display.blit(bg, (text_rect.x - 8, text_rect.y - 5))
+        display.blit(text, text_rect)
