@@ -51,6 +51,8 @@ class Animation(Enum):
     RUN = auto()
     
     STRAIGHT = auto()
+    ACTIVE = auto()
+    INACTIVE = auto()
     # specifically for conveyors
     CORNER = auto()
     BOTLEFT = auto()
