@@ -58,7 +58,6 @@ class Furnace(MachineEntity):
     
     def accept(self, resource, tile_x=None, tile_y=None):
         port = self.get_port(tile_x, tile_y)
-        print(f"ACCEPT: resource={resource.resource_type} tile=({tile_x},{tile_y}) resolved_port={port} can_accept={self.can_accept(resource, port)}")
         if not self.can_accept(resource, port):
             return False
         self.input_buffer[port] = resource
