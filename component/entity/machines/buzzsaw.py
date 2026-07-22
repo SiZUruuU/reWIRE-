@@ -1,6 +1,5 @@
-from ...utils import EntityType, Animation, Direction, ResourceType
+from ...utils import ResourceType
 from .machine import MachineEntity
-from pygame import Vector2
 
 # this machine receives basic wood or stone
 # wood = planks
