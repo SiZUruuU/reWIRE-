@@ -52,11 +52,9 @@ class BaseMap(ABC):
         return 0 <= tile_x < len(self.grid) and 0 <= tile_y < len(self.grid[0])
 
     def place_entity(self, grid: Vector2, direction: Vector2, entity_type: EntityType):
-        # check if grid is free:
         x, y = int(grid.x), int(grid.y)
         if not self.is_tile_valid(x, y):
             return False
-        
         old_machine = self.grid[x][y]
         if old_machine is not None:
             if old_machine.entity_type == entity_type:
@@ -68,62 +66,68 @@ class BaseMap(ABC):
                 return True
             return False
 
-        if self.is_tile_free(x, y):
-            entity = self.ENTITY[entity_type](
-                grid * self.world.game.TILE_SIZE, # revert index back to world coordinates
-                direction,
-                self.world,
-                entity_type
-            )
-            self.grid[x][y] = entity
-            self.resolve_ground_item(x, y, entity)
+        entity_class = self.ENTITY[entity_type]
+        fw, fh = getattr(entity_class, "FOOTPRINT", (1, 1))
+        covered_tiles = [(x + dx, y + dy) for dx in range(fw) for dy in range(fh)]
 
-            # conveyor belt realignment of sprite
-            if entity_type == EntityType.CONVEYOR:
-                # recalculate the layout of the belt we just placed:
-                self.belt_neighbor_recalculation(x, y)
-                
-                # check the tile directly in front of this new belt:
-                next_x = x + int(direction.x)
-                next_y = y + int(direction.y)
-                self.belt_neighbor_recalculation(next_x, next_y)
+        for tx, ty in covered_tiles:
+            if not self.is_tile_valid(tx, ty) or not self.is_tile_free(tx, ty):
+                return False
 
-            # tile was placed:
-            return True
-        # something's blocking the waaaay
-        return False
+        entity = entity_class(
+            grid * self.world.game.TILE_SIZE,
+            direction,
+            self.world,
+            entity_type
+        )
+
+        for tx, ty in covered_tiles:
+            self.grid[tx][ty] = entity
+            self.resolve_ground_item(tx, ty, entity)
+
+        if entity_type == EntityType.CONVEYOR:
+            self.belt_neighbor_recalculation(x, y)
+            next_x = x + int(direction.x)
+            next_y = y + int(direction.y)
+            self.belt_neighbor_recalculation(next_x, next_y)
+
+        return True
 
     def resolve_ground_item(self, x, y, entity):
-        item = self.ground_items.get((x, y))
-        #print(f"RESOLVE at ({x},{y}) found={item}")
-        if item is None:
-            return
-        
-        if entity.accept(item):
-            self.clear_ground_item(x, y)
-            return
+        items = list(self.get_ground_item(x, y))
+        for item in items:
+            if entity.accept(item, x, y):
+                self.clear_ground_item(x, y, item)
+            else:
+                self.clear_ground_item(x, y, item)
+                next_x = x + int(entity.direction.x)
+                next_y = y + int(entity.direction.y)
 
-        self.clear_ground_item(x, y)
-        next_x = x + int(entity.direction.x)
-        next_y = y + int(entity.direction.y)
+                size = self.world.game.TILE_SIZE
+                new_position = Vector2(next_x, next_y) * size + Vector2(size/2, size/2)
+                item.position = new_position
+                item.rect.center = (round(new_position.x), round(new_position.y))
 
-        size = self.world.game.TILE_SIZE
-        new_position = Vector2(next_x, next_y) * size + Vector2(size/2, size/2)
-        item.position = new_position
-        item.rect.center = (round(new_position.x), round(new_position.y))
-
-        if self.is_tile_valid(next_x, next_y):
-            self.ground_items[(next_x, next_y)] = item
+                if self.is_tile_valid(next_x, next_y):
+                    self.map_ground_item(next_x, next_y, item)
 
     # for items on ground (non machines):
     def get_ground_item(self, tile_x, tile_y):
-        return self.ground_items.get((tile_x, tile_y))
+        return self.ground_items.get((tile_x, tile_y), [])
 
     def map_ground_item(self, tile_x, tile_y, resource):
-        self.ground_items[(tile_x, tile_y)] = resource
+        current = self.ground_items.get((tile_x, tile_y))
+        if current and current[0].resource_type != resource.resource_type:
+            return False # only same resource should be on the same tile
+        self.ground_items.setdefault((tile_x, tile_y), []).append(resource)
+        return True # item added to ground
     
-    def clear_ground_item(self, tile_x, tile_y):
-        self.ground_items.pop((tile_x, tile_y), None)
+    def clear_ground_item(self, tile_x, tile_y, resource):
+        items = self.ground_items.get((tile_x, tile_y))
+        if items and resource in items:
+            items.remove(resource)
+            if not items:
+                del self.ground_items[(tile_x, tile_y)]
 
     # change belt based on current neighbor
     def belt_neighbor_recalculation(self, x, y):
