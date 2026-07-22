@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from ..utils import EntityType, Animation, Direction
 from ..entity import *
 from ..entity.machines.machine import MachineEntity
+from ..entity.generators.generator import Generator
 from pygame import Vector2
 
 # Dict for corner coords to animation sprite:
@@ -29,6 +30,7 @@ class BaseMap(ABC):
         EntityType.CRUSHER : Crusher,
         EntityType.FURNACE : Furnace,
         EntityType.SELLBOX : SellBox,
+        EntityType.WOOD_GENERATOR : Generator
     }
 
     def __init__(self, width, height, world):
