@@ -68,16 +68,17 @@ class PlayerEntity(BaseEntity):
         
         tile = map.grid[tile_x][tile_y] if map.is_tile_valid(tile_x, tile_y) else None
 
-        if tile is not None and tile.accept(self.held_item):
+        if tile is not None and tile.accept(self.held_item, tile_x, tile_y):
             self.held_item = None
             return
 
-        if tile is None and map.get_ground_item(tile_x, tile_y) is None:
-            snapped = pygame.Vector2(tile_x, tile_y) * game.TILE_SIZE + pygame.Vector2(game.TILE_SIZE/2, game.TILE_SIZE/2)
-            self.held_item.position = snapped
-            self.held_item.rect.center = (round(snapped.x), round(snapped.y))
-            map.map_ground_item(tile_x, tile_y, self.held_item)
-            self.held_item = None
+        if tile is None:
+            # only drop item if the item on the ground is None or same item
+            if map.map_ground_item(tile_x, tile_y, self.held_item):
+                snapped = pygame.Vector2(tile_x, tile_y) * game.TILE_SIZE + pygame.Vector2(game.TILE_SIZE/2, game.TILE_SIZE/2)
+                self.held_item.position = snapped
+                self.held_item.rect.center = (round(snapped.x), round(snapped.y))
+                self.held_item = None
     
     def try_pickup(self, map, game, camera):
         tile_x, tile_y = self.get_interact_tile(map, game, camera)
@@ -85,10 +86,11 @@ class PlayerEntity(BaseEntity):
             return
 
         ground = map.get_ground_item(tile_x, tile_y)
-        if ground is not None:
-            self.held_item = ground
-            ground.take_resource(self)
-            map.clear_ground_item(tile_x, tile_y)
+        if ground:
+            picked = ground[-1]
+            self.held_item = picked
+            picked.take_resource(self)
+            map.clear_ground_item(tile_x, tile_y, picked)
             return
 
         tile = map.grid[tile_x][tile_y] if map.is_tile_valid(tile_x, tile_y) else None
