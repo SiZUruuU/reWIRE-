@@ -42,6 +42,7 @@ class TestWorld(State):
             EntityType.FURNACE,
         ]
 
+    ## LOGIC RELATED METHODS ##
     def update(self, delta_time, actions):        
         # World related actions:
         self.handle_inputs(actions)        
@@ -49,29 +50,6 @@ class TestWorld(State):
         # update all sprites' data in this world:
         self.all_sprites.update(self.game.global_time, delta_time, actions)
         self.camera.scroll(delta_time)
-
-    def render(self, display):
-        display.fill((50, 60, 90))
-
-        # render the map:
-        self.map.draw(display, self.camera)
-
-        # render all sprites in this world:
-        # updated it with layering
-        for sprite in self.all_sprites:
-            camera = sprite.rect.topleft - self.camera.offset
-            display.blit(sprite.image, camera)
-        
-        # preview selected item:
-        if self.selected_entity != EntityType.NONE:
-            self.draw_placement_preview(display)
-        
-        # tile interaction highlight:
-        self.draw_interact_highlight(display)
-
-        # ground item count:
-        self.draw_item_count(display)
-
 
     def handle_inputs(self, actions):                
         mouse = get_world_mousePos(self.game, self.camera)
@@ -144,6 +122,32 @@ class TestWorld(State):
         if actions["space"]:
             self.player.try_interact(self.map, self.game, self.camera)
             self.game.reset_key("space")
+
+
+
+    ## DISPLAY RELATED METHODS ##
+
+    def render(self, display):
+        display.fill((50, 60, 90))
+
+        # render the map:
+        self.map.draw(display, self.camera)
+
+        # render all sprites in this world:
+        # updated it with layering
+        for sprite in self.all_sprites:
+            camera = sprite.rect.topleft - self.camera.offset
+            display.blit(sprite.image, camera)
+        
+        # preview selected item:
+        if self.selected_entity != EntityType.NONE:
+            self.draw_placement_preview(display)
+        
+        # tile interaction highlight:
+        self.draw_interact_highlight(display)
+
+        # ground item count:
+        self.draw_item_count(display)
 
     # shows green or red tinted entity ghost:
     def draw_placement_preview(self, display):
