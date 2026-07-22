@@ -3,12 +3,19 @@ from ...utils import EntityType, Direction, Animation, check_tile_at, Layers
 from pygame import Vector2
 
 class MachineEntity(BaseEntity):
+    # important! when making machines that are bigger than 1x1, make sure
+    # to create the footprint here before passing to __init__
+    FOOTPRINT = (1, 1)
     def __init__(self, position: Vector2, direction: Vector2, world, entity_type: EntityType):
         super().__init__(position, world, entity_type)
+        self.footprint = self.FOOTPRINT # how much tiles the machine takes up
         self.direction = direction
         dir_key = Direction((int(direction.x), int(direction.y)))
         self.animations = self.world.game.assets[entity_type][Animation.STRAIGHT][dir_key]
         self.image = self.animations[0]
+        # footprint width and height
+        fw, fh = getattr(self, "footprint", (1, 1))
+        # image must be exactly same as footprint        
         self.rect = self.image.get_rect(topleft=(position.x, position.y))
         
         # Overrided by sub classes:
