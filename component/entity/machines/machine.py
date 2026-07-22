@@ -1,5 +1,5 @@
 from ..entity import BaseEntity
-from ...utils import EntityType, Direction, Animation, check_tile_at
+from ...utils import EntityType, Direction, Animation, check_tile_at, Layers
 from pygame import Vector2
 
 class MachineEntity(BaseEntity):
@@ -14,6 +14,9 @@ class MachineEntity(BaseEntity):
         # Overrided by sub classes:
         self.input_buffer = {"material": None}
         self.output_buffer = None
+        
+        self.entry = self.position + Vector2(self.width, self.height/2)
+        self.exit = self.position + Vector2(0, self.height/2)
 
         self.recipes = {}
         self.process_time = 0.0
@@ -22,6 +25,7 @@ class MachineEntity(BaseEntity):
     
     def update(self, global_time, delta_time, actions):
         self.process(delta_time)
+        self.sync_resource()
         self.try_release()
         self.animate(global_time)
 
@@ -68,13 +72,32 @@ class MachineEntity(BaseEntity):
         self.input_buffer["material"] = None
 
         input_resource.resource_type = self.active_recipe["output"]
-        input_resource.image = self.world.game.assets[EntityType.RESOURCE][input_resource.resource_type]
+        input_resource.image = self.world.game.assets[EntityType.RESOURCE][input_resource.resource_type].copy()
+        input_resource.image.set_alpha(255)
+        self.world.all_sprites.change_layer(input_resource, Layers.FLOOR_1.value)
 
         self.output_buffer = input_resource
         self.is_processing = False
         self.process_time = 0.0
         self.active_recipe = None
     
+    def sync_resource(self):
+        resource = self.input_buffer.get("material")
+        if resource is None or self.active_recipe is None:
+            return
+        
+        duration = self.active_recipe["duration"]
+        progress = 1.0 - (self.process_time / duration) if duration > 0 else 1.0
+        progress = max(0.0, min(progress, 1.0))
+
+        size = self.world.game.TILE_SIZE
+        position = self.entry.lerp(self.exit, progress)
+        resource.rect.center = (round(position.x), round(position.y))
+
+        alpha = int(150 * (1.0 - progress * 0.7))
+        self.world.all_sprites.change_layer(resource, Layers.MIDDLE_1.value)
+        resource.image.set_alpha(alpha)
+
     def try_release(self):
         # if there's nothing to release:
         if self.output_buffer is None:
