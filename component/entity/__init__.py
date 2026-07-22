@@ -5,8 +5,9 @@ from .machines.conveyor import Conveyor
 from .machines.buzzsaw import Buzzsaw
 from .machines.crusher import Crusher
 from .machines.furnace import Furnace
+from .machines.sellbox import SellBox
 # resource entities
 from .resources.resource import ResourceEntity
 
 # all entities
-__all__ = ["Player", "Conveyor", "ResourceEntity", "Buzzsaw", "Crusher", "Furnace"]
+__all__ = ["Player", "Conveyor", "ResourceEntity", "Buzzsaw", "Crusher", "Furnace", "SellBox"]
