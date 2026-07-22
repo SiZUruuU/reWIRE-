@@ -209,6 +209,7 @@ class Game:
         
         # load fonts:
         self.assets[Fonts.TITLE] = pygame.font.Font(os.path.join(self.font_dir, "retganon.ttf"), 18)
+        self.assets[Fonts.HEADER] = pygame.font.Font(os.path.join(self.font_dir, "HomeVideo-Bold.ttf"), 12)
         self.assets[Fonts.BODY] = pygame.font.Font(os.path.join(self.font_dir, "reindeer-typewriter.ttf"), 8)
         
         # load sprites
@@ -315,6 +316,20 @@ class Game:
                 Direction.SOUTH : [pygame.transform.rotate(f, -180) for f in furnace_f],
                 Direction.EAST : [pygame.transform.rotate(f, -90) for f in furnace_f],
                 Direction.WEST : furnace_f,
+            }
+        }
+
+        # sellbox
+        sellbox = pygame.Surface((self.TILE_SIZE, self.TILE_SIZE))
+        sellbox.fill((50, 200, 50))
+        sellbox_frame = [sellbox]
+
+        self.assets[EntityType.SELLBOX] = {
+            Animation.STRAIGHT: {
+                Direction.NORTH: sellbox_frame,
+                Direction.SOUTH: sellbox_frame,
+                Direction.EAST: sellbox_frame,
+                Direction.WEST: sellbox_frame,
             }
         }
 
