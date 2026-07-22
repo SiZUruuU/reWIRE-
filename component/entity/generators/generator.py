@@ -1,6 +1,6 @@
-from utils import EntityType, check_tile_at
+from ...utils import EntityType, Animation, Direction, check_tile_at
 from ..resources.resource import ResourceEntity
-from entity import BaseEntity
+from ..entity import BaseEntity
 from .generator_data import GENERATOR_DATA
 from pygame import Vector2
 
@@ -20,7 +20,15 @@ class Generator(BaseEntity):
         self.timer = 0.0
         self.output_buffer = None
 
-        self.image = world.game.assets[EntityType.GENERATOR][generator_type]
+        dir_key = Direction(direction.x, direction.y)
+        self.animation_speed = 10.0
+        self.animations = world.game.assets[generator_type][Animation.STRAIGHT][dir_key]
+        self.image = self.animations[0]
+        self.rect = self.image.get_rect(topleft=(position.x, position.y))
+        self.width = self.image.get_width()
+        self.height = self.image.get_height()
+
+        print(f"WIDTH:{self.width}, HEIGHT:{self.height}")
 
     def update(self, global_time, delta_time, actions):
         if self.output_buffer is None:
@@ -29,12 +37,12 @@ class Generator(BaseEntity):
                 self.timer = 0.0
                 self.generate()
         self.try_release()
+        self.animate(global_time)
 
     def generate(self):
-        size = self.world.game.TILE_SIZE
-        spawn_position = self.position + Vector2(size/2, size/2)
+        spawn_position = self.position
         self.output_buffer = ResourceEntity(
-            spawn_position, self.world, EntityType.RESOURCE, self.resource_type
+            spawn_position, self.world, self.resource_type
         )
 
     def try_release(self):
@@ -42,11 +50,14 @@ class Generator(BaseEntity):
             return
 
         output_positon = self.position + self.direction * self.world.game.TILE_SIZE
-        infront = check_tile_at(output_positon.x, output_positon.y, self.world, self.world.map.grid)
+        infront = check_tile_at(output_positon.x, output_positon.y, self.world.game, self.world.map.grid)
         if infront is None:
             return
         if infront.accept(self.output_buffer):
             self.output_buffer = None
+
+    def animate(self, global_time):
+        self.image = self.get_frame_animation(None, global_time)
 
     def apply_direction(self, direction):
         self.direction = direction
