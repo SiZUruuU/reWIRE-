@@ -55,6 +55,7 @@ class TestWorld(State):
             EntityType.BUZZSAW,
             EntityType.CRUSHER,
             EntityType.FURNACE,
+            EntityType.WOOD_GENERATOR,
             EntityType.SELLBOX, # DO NOT ADD TO FINAL GAME WORLD
         ]
 
@@ -94,6 +95,7 @@ class TestWorld(State):
 
         # handle object placement:
         if actions["LMB"] and self.selected_entity != EntityType.NONE:
+            print(self.selected_entity)
             x, y = mouse['tile_x'], mouse['tile_y']
             location = pygame.Vector2(x, y)
             self.map.place_entity(
