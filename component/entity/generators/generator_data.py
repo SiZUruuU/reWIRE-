@@ -1,15 +1,15 @@
-from utils import ResourceType
+from ...utils import ResourceType, EntityType
 
 # all types of generator right here
 GENERATOR_DATA = {
-    "wood": {
+    EntityType.WOOD_GENERATOR : {
         "resource_type": ResourceType.WOOD, 
-        "cooldown": 2.0, # cooldown to produce the next resource
+        "cooldown": 3.5, # cooldown to produce the next resource
         "footprint": (2, 1) # if you haven't seen machine.py footprint is essentially the amount of tiles a macine occupies
     },
-    "stone": {
+    EntityType.STONE_GENERATOR : {
         "resource_type": ResourceType.STONE,
-        "cooldown": 3.0,
+        "cooldown": 5.0,
         "footprint": (1, 1)
     }
 }
