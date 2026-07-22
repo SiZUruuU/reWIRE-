@@ -38,6 +38,7 @@ class TestWorld(State):
         self.hotbar = [
             EntityType.CONVEYOR,
             EntityType.BUZZSAW,
+            EntityType.CRUSHER,
         ]
 
     def update(self, delta_time, actions):        
@@ -107,7 +108,7 @@ class TestWorld(State):
             self.game.reset_key("LMB")
 
         # resource placement test:
-        if actions["RMB"]:
+        if actions["key_f"]:
             position = pygame.Vector2(mouse['world_x'], mouse['world_y'])
             resource = ResourceEntity(position, self, EntityType.RESOURCE, ResourceType.WOOD)
             self.map.map_ground_item(int(position.x//self.game.TILE_SIZE), int(position.y//self.game.TILE_SIZE), resource)
@@ -115,7 +116,16 @@ class TestWorld(State):
             tile = check_tile_at(position.x, position.y, self.game, self.map.grid)
             if tile is not None:
                 tile.accept(resource)            
-            self.game.reset_key("RMB")
+            self.game.reset_key("key_f")
+        if actions["key_g"]:
+            position = pygame.Vector2(mouse['world_x'], mouse['world_y'])
+            resource = ResourceEntity(position, self, EntityType.RESOURCE, ResourceType.STONE)
+            self.map.map_ground_item(int(position.x//self.game.TILE_SIZE), int(position.y//self.game.TILE_SIZE), resource)
+            #print(f"DROPPED tile=({mouse['tile_x']},{mouse['tile_y']}) items={self.map.ground_items}")
+            tile = check_tile_at(position.x, position.y, self.game, self.map.grid)
+            if tile is not None:
+                tile.accept(resource)
+            self.game.reset_key("key_g")
         
         # player take or drop resource:
         if actions["space"]:
@@ -183,5 +193,3 @@ class TestWorld(State):
         if not frames:
             return None
         return frames[0]
-        
-        
