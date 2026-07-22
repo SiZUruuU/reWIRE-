@@ -69,5 +69,3 @@ class Conveyor(MachineEntity):
 
     def apply_direction(self, direction):
         self.apply_corner(direction, direction)
-
-    
