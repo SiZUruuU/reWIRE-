@@ -1,12 +1,12 @@
-from ...utils import EntityType, Animation, Direction, check_tile_at
+from ...utils import EntityType, check_tile_at
 from .machine import MachineEntity
 from pygame import Vector2
 
 class Conveyor(MachineEntity):
     def __init__(self, position: Vector2, direction: Vector2, world, entity_type: EntityType):
-        super().__init__(position, direction, world, entity_type)        
-        self.speed = 20       
+        super().__init__(position, direction, world, entity_type)
         self.animation_speed = 7.5 # in seconds
+        self.speed = 20
 
         self.items = []
         self.min_gap = 0.3

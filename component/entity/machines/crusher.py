@@ -6,10 +6,8 @@ from .machine import MachineEntity
 class Crusher(MachineEntity):
     def __init__(self, position, direction, world, entity_type):
         super().__init__(position, direction, world, entity_type)
-        self.width, self.height = 32, 32
-        self.speed = 20        
-       
-        self.animation_speed = 7.5 # in seconds
+        self.width, self.height = 32, 32            
+        self.animation_speed = 10 # in seconds
         self.recipes = {
             ResourceType.STONE: {
                 "output": ResourceType.SAND, "duration": 3.75
