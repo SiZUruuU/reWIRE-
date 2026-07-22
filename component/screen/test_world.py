@@ -4,7 +4,7 @@ from .states import State
 from ..map.test_map import TestMap
 from ..camera import Camera, Follow
 from ..entity import Player, ResourceEntity
-from ..utils import get_world_mousePos, EntityType, Animation, Direction, ResourceType, check_tile_at
+from ..utils import get_world_mousePos, EntityType, Animation, Direction, ResourceType, check_tile_at, Fonts
 
 # TESTING FOR FEATURES
 class TestWorld(State):
@@ -69,6 +69,9 @@ class TestWorld(State):
         # tile interaction highlight:
         self.draw_interact_highlight(display)
 
+        # ground item count:
+        self.draw_item_count(display)
+
 
     def handle_inputs(self, actions):                
         mouse = get_world_mousePos(self.game, self.camera)
@@ -79,13 +82,11 @@ class TestWorld(State):
             if actions[key_string]:
                 self.selected_entity = self.hotbar[k]
                 self.game.reset_key(key_string)
-                print(f"selected: {self.hotbar[k]}")
             
         # clear selection:
         if actions["key_q"]:
             self.selected_entity = EntityType.NONE
             self.game.reset_key("key_q")
-            print("Cleared selection")
 
         # handle rotation data:
         if actions["key_r"]:
@@ -112,26 +113,36 @@ class TestWorld(State):
         if actions["key_f"]:
             position = pygame.Vector2(mouse['world_x'], mouse['world_y'])
             resource = ResourceEntity(position, self, EntityType.RESOURCE, ResourceType.WOOD)
-            self.map.map_ground_item(int(position.x//self.game.TILE_SIZE), int(position.y//self.game.TILE_SIZE), resource)
-            #print(f"DROPPED tile=({mouse['tile_x']},{mouse['tile_y']}) items={self.map.ground_items}")
+            
             tile = check_tile_at(position.x, position.y, self.game, self.map.grid)
-            if tile is not None:
-                tile.accept(resource)            
+            if tile is not None and tile.accept(resource):
+                pass
+            else:
+                tile_x = int(position.x // self.game.TILE_SIZE)
+                tile_y = int(position.y // self.game.TILE_SIZE)
+                if not self.map.map_ground_item(tile_x, tile_y, resource):
+                    resource.kill()
+
             self.game.reset_key("key_f")
+
         if actions["key_g"]:
             position = pygame.Vector2(mouse['world_x'], mouse['world_y'])
             resource = ResourceEntity(position, self, EntityType.RESOURCE, ResourceType.STONE)
-            self.map.map_ground_item(int(position.x//self.game.TILE_SIZE), int(position.y//self.game.TILE_SIZE), resource)
-            #print(f"DROPPED tile=({mouse['tile_x']},{mouse['tile_y']}) items={self.map.ground_items}")
+            
             tile = check_tile_at(position.x, position.y, self.game, self.map.grid)
-            if tile is not None:
-                tile.accept(resource)
+            if tile is not None and tile.accept(resource):
+                pass
+            else:
+                tile_x = int(position.x // self.game.TILE_SIZE)
+                tile_y = int(position.y // self.game.TILE_SIZE)
+                if not self.map.map_ground_item(tile_x, tile_y, resource):
+                    resource.kill()
+                    
             self.game.reset_key("key_g")
         
         # player take or drop resource:
         if actions["space"]:
             self.player.try_interact(self.map, self.game, self.camera)
-            #print(f"dir:{self.player.facing}, held:{self.player.held_item}")
             self.game.reset_key("space")
 
     # shows green or red tinted entity ghost:
@@ -194,3 +205,20 @@ class TestWorld(State):
         if not frames:
             return None
         return frames[0]
+
+    def draw_item_count(self, display):
+        size = self.game.TILE_SIZE
+        font = self.game.assets[Fonts.BODY]
+        for (tile_x, tile_y), items in self.map.ground_items.items():
+            if len(items) <= 1:
+                continue
+            screen_x = tile_x * size - self.camera.offset.x
+            screen_y = tile_y * size - self.camera.offset.y
+
+            text = font.render(str(len(items)), True, (255, 255, 255))
+            text_rect = text.get_rect(bottomright=(screen_x + size - 2, screen_y + size - 2))
+
+            bg = pygame.Surface((text_rect.width + 4, text_rect.height + 2), pygame.SRCALPHA)
+            bg.fill((0, 0, 0, 150))
+            display.blit(bg, (text_rect.x - 2, text_rect.y - 1))
+            display.blit(text, text_rect)
