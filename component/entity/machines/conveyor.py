@@ -49,7 +49,7 @@ class Conveyor(MachineEntity):
         if next.accept(head["resource"], tile_x, tile_y):
             self.items.pop(0)
     
-    def accept(self, resource, tile_x=None, tile_y=None):
+    def accept(self, resource, tile_x=None, tile_y=None, from_direction=None):
         if self.items and self.items[-1]["progress"] < self.min_gap:
             return False
         item = {
