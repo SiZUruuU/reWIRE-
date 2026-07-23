@@ -18,6 +18,10 @@ class BaseEntity(ABC, pygame.sprite.Sprite):
         self.rect = self.image.get_rect(topleft=(position.x, position.y))
         self.width = self.image.get_width()
         self.height = self.image.get_height()
+
+        # specific for machines and generators
+        self.direction = pygame.Vector2(0, 0)
+        self.output_offset = (0, 0)
         
         self.animations = {}
         self.current_frame = 0
@@ -43,3 +47,37 @@ class BaseEntity(ABC, pygame.sprite.Sprite):
     def set_layout(self, animation_type, key):
         self.animations = self.world.game.assets[self.entity_type][animation_type][key]
         self.image = self.animations[0]
+
+    # Use only when necessary (machines)
+    def rotate_offset(self, offset):
+        dir_int = (int(self.direction.x), int(self.direction.y))
+        rotations = {
+            (-1, 0): lambda ox, oy: (ox, oy),
+            (0, -1): lambda ox, oy: (-oy, ox),
+            (1, 0):  lambda ox, oy: (-ox, -oy),
+            (0, 1):  lambda ox, oy: (oy, -ox),
+        }
+        transform = rotations.get(dir_int, lambda ox, oy: (ox, oy))
+        return transform(*offset)
+
+    def get_output_position(self):
+        size = self.world.game.TILE_SIZE
+        rotated = self.rotate_offset(self.output_offset)
+        origin = self.position + pygame.Vector2(rotated[0]*size, rotated[1]*size)
+        return origin + self.direction * size
+
+    def rect_from_covered_tiles(self, covered_tiles):
+        size = self.world.game.TILE_SIZE
+        min_x = min(tx for tx, ty in covered_tiles) * size
+        min_y = min(ty for tx, ty in covered_tiles) * size
+        max_x = (max(tx for tx, ty in covered_tiles) + 1) * size
+        max_y = (max(ty for tx, ty in covered_tiles) + 1) * size
+        return pygame.Rect(min_x, min_y, max_x - min_x, max_y - min_y)
+
+    def get_rotated_image(self, base_frame, direction):
+        angle_by_direction = {
+            (-1, 0): 0, (0, -1): 90, (1, 0): 180, (0, 1): 270,
+        }
+        dir_int = (int(direction.x), int(direction.y))
+        angle = angle_by_direction.get(dir_int, 0)
+        return pygame.transform.rotate(base_frame, angle)
