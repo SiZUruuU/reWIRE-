@@ -70,3 +70,6 @@ class Conveyor(MachineEntity):
 
     def apply_direction(self, direction):
         self.apply_corner(direction, direction)
+
+    def is_full(self):
+        return bool(self.items) and self.items[-1]["progress"] < self.min_gap
