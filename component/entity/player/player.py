@@ -2,7 +2,7 @@ import pygame
 
 from ..entity import BaseEntity
 from ..machines.conveyor import Conveyor
-from ...utils import EntityType, Animation, get_world_mousePos
+from ...utils import EntityType, Animation, Layers, get_world_mousePos
 
 class PlayerEntity(BaseEntity):
     def __init__(self, position, world, entity_type: EntityType):
@@ -69,6 +69,7 @@ class PlayerEntity(BaseEntity):
         tile = map.grid[tile_x][tile_y] if map.is_tile_valid(tile_x, tile_y) else None
 
         if tile is not None and tile.accept(self.held_item, tile_x, tile_y):
+            self.world.all_sprites.change_layer(self.held_item, Layers.FLOOR_1.value)
             self.held_item = None
             return
 
@@ -78,6 +79,8 @@ class PlayerEntity(BaseEntity):
                 snapped = pygame.Vector2(tile_x, tile_y) * game.TILE_SIZE + pygame.Vector2(game.TILE_SIZE/2, game.TILE_SIZE/2)
                 self.held_item.position = snapped
                 self.held_item.rect.center = (round(snapped.x), round(snapped.y))
+                self.world.all_sprites.change_layer(self.held_item, Layers.FLOOR_1.value)
+
                 self.held_item = None
     
     def try_pickup(self, map, game, camera):
@@ -91,6 +94,7 @@ class PlayerEntity(BaseEntity):
             self.held_item = picked
             picked.take_resource(self)
             map.clear_ground_item(tile_x, tile_y, picked)
+            self.world.all_sprites.change_layer(self.held_item, Layers.FRONT_1.value)
             return
 
         tile = map.grid[tile_x][tile_y] if map.is_tile_valid(tile_x, tile_y) else None
@@ -99,12 +103,14 @@ class PlayerEntity(BaseEntity):
             item = tile.items.pop(0)   # grab whichever is nearest the exit
             self.held_item = item["resource"]
             self.held_item.take_resource(self)
+            self.world.all_sprites.change_layer(self.held_item, Layers.FRONT_1.value)
             return
 
         if hasattr(tile, "output_buffer") and tile.output_buffer is not None:
             self.held_item = tile.output_buffer
             tile.output_buffer = None
             self.held_item.take_resource(self)
+            self.world.all_sprites.change_layer(self.held_item, Layers.FRONT_1.value)
 
     def get_interact_tile(self, map, game, camera):
         mouse = get_world_mousePos(game, camera)
