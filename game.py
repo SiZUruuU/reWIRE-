@@ -308,7 +308,7 @@ class Game:
             Animation.STRAIGHT : {
                 Direction.NORTH : [pygame.transform.rotate(f, 90) for f in crusher],
                 Direction.SOUTH : [pygame.transform.rotate(f, -90) for f in crusher],
-                Direction.EAST : buzzsaw,
+                Direction.EAST : crusher,
                 Direction.WEST : [pygame.transform.flip(f, True, False) for f in crusher],
             }
         }
@@ -323,17 +323,17 @@ class Game:
             0, 64, 34, 64, 3
         )
         self.assets[EntityType.FURNACE] = {
-            Animation.STRAIGHT : {
-                Direction.NORTH : [pygame.transform.rotate(f, -90) for f in furnace],
-                Direction.SOUTH : [pygame.transform.rotate(f, 90) for f in furnace],
-                Direction.EAST : [pygame.transform.flip(f, True, False) for f in furnace],
-                Direction.WEST : furnace,
+            Animation.STRAIGHT: {
+                Direction.NORTH: [pygame.transform.rotate(f, -90) for f in furnace],
+                Direction.SOUTH: [pygame.transform.rotate(f, 90) for f in furnace],
+                Direction.EAST: [pygame.transform.rotate(f, 180) for f in furnace],
+                Direction.WEST: furnace,
             },
-            Animation.ACTIVE : {
-                Direction.NORTH : [pygame.transform.rotate(f, -270) for f in furnace_f],
-                Direction.SOUTH : [pygame.transform.rotate(f, -180) for f in furnace_f],
-                Direction.EAST : [pygame.transform.rotate(f, -90) for f in furnace_f],
-                Direction.WEST : furnace_f,
+            Animation.ACTIVE: {
+                Direction.NORTH: [pygame.transform.rotate(f, -90) for f in furnace_f],
+                Direction.SOUTH: [pygame.transform.rotate(f, 90) for f in furnace_f],
+                Direction.EAST: [pygame.transform.rotate(f, 180) for f in furnace_f],
+                Direction.WEST: furnace_f,
             }
         }
 
@@ -380,13 +380,13 @@ class Game:
             Animation.STRAIGHT: {
                 Direction.NORTH: [pygame.transform.rotate(f, -90) for f in stone_gen],
                 Direction.SOUTH: [pygame.transform.rotate(f, 90) for f in stone_gen],
-                Direction.EAST: [pygame.transform.flip(f, True, False) for f in stone_gen],
+                Direction.EAST: [pygame.transform.rotate(f, 180) for f in stone_gen],
                 Direction.WEST: stone_gen,
             },
             Animation.ACTIVE: {
                 Direction.NORTH: [pygame.transform.rotate(f, -90) for f in stone_gen_f],
                 Direction.SOUTH: [pygame.transform.rotate(f, 90) for f in stone_gen_f],
-                Direction.EAST: [pygame.transform.flip(f, True, False) for f in stone_gen_f],
+                Direction.EAST: [pygame.transform.rotate(f, 180) for f in stone_gen_f],
                 Direction.WEST: stone_gen_f,
             }
         }
