@@ -362,6 +362,31 @@ class Game:
             }
         }
 
+        # stone generator
+        stone_gen = self.load_frames(
+            os.path.join(self.sprite_dir, "stone_generator_spritesheet.png"),
+            0, 0, 63, 64, 3
+        )
+        stone_gen_f = self.load_frames(
+            os.path.join(self.sprite_dir, "stone_generator_spritesheet.png"),
+            63*3, 0, 63, 64, 3
+        )
+
+        self.assets[EntityType.STONE_GENERATOR] = {
+            Animation.STRAIGHT: {
+                Direction.NORTH: [pygame.transform.rotate(f, -90) for f in stone_gen],
+                Direction.SOUTH: [pygame.transform.rotate(f, 90) for f in stone_gen],
+                Direction.EAST: [pygame.transform.flip(f, True, False) for f in stone_gen],
+                Direction.WEST: stone_gen,
+            },
+            Animation.ACTIVE: {
+                Direction.NORTH: [pygame.transform.rotate(f, -90) for f in stone_gen_f],
+                Direction.SOUTH: [pygame.transform.rotate(f, 90) for f in stone_gen_f],
+                Direction.EAST: [pygame.transform.flip(f, True, False) for f in stone_gen_f],
+                Direction.WEST: stone_gen_f,
+            }
+        }
+
     # helper method for loading assets:
     def load_frames(self, filename, x, y, width, height, amount):
         sprite_sheet = pygame.image.load(filename).convert_alpha()
