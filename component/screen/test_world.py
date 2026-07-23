@@ -5,7 +5,8 @@ from ..map.test_map import TestMap
 from ..camera import Camera, Follow
 from ..entity import Player, ResourceEntity
 from ..utils import get_world_mousePos, EntityType, Animation, Direction, ResourceType, check_tile_at, Fonts
-
+from component.utils.enums import AudioType, OST, SFX
+from component.utils.audio import AudioComp
 ## THIS IS A TESTING WORLD TO TEST FEATURES AND THEORIES ##
 # Use this world as reference in making other levels as all
 # features is applied in this class
@@ -102,7 +103,8 @@ class TestWorld(State):
                 location,
                 self.direction,
                 self.selected_entity
-            )                        
+            )  
+            AudioComp.play_sfx(self, AudioType.SFX, SFX.HOVER)                      
             self.game.reset_key("LMB")
 
         # resource placement test:

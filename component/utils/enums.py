@@ -78,3 +78,20 @@ class Fonts(Enum):
     TITLE = auto()
     HEADER = auto()
     BODY = auto()
+
+class AudioType(Enum):
+    SFX = "sfx"
+    OST = "ost"
+
+class SFX(Enum):
+    HOVER = auto()
+    CLICK = auto()
+    WALK = auto()
+    MACHINE_RUNNING = auto()
+    MACHINE_BROKEN = auto()
+    MACHINE_PLACED = auto()
+
+class OST(Enum):
+    TITLE = auto()
+    OFFICE = auto()
+    DAY = auto()

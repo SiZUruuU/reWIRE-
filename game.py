@@ -1,6 +1,8 @@
 import pygame, os, time
 from component.screen.title_screen import TitleScreen
 from component.utils import EntityType, Animation, Direction, Fonts, ResourceType
+from component.utils.enums import AudioType, OST, SFX
+from component.utils.audio import AudioComp
 
 class Game:
     def __init__(self):
@@ -71,6 +73,7 @@ class Game:
         self.load_assets()
         # load states to stack, must be in order
         self.load_states()
+        AudioComp(self)
 
     # main game loop
     def game_loop(self):
@@ -206,12 +209,23 @@ class Game:
         self.assets_dir = os.path.join("asset")
         self.sprite_dir = os.path.join(self.assets_dir, "sprites")
         self.font_dir = os.path.join(self.assets_dir, "fonts")
+        self.sfx_dir = os.path.join(self.assets_dir, "sfx")
+        self.ost_dir = os.path.join(self.assets_dir, "ost")
         
         # load fonts:
         self.assets[Fonts.TITLE] = pygame.font.Font(os.path.join(self.font_dir, "retganon.ttf"), 18)
         self.assets[Fonts.HEADER] = pygame.font.Font(os.path.join(self.font_dir, "HomeVideo-Bold.ttf"), 12)
         self.assets[Fonts.BODY] = pygame.font.Font(os.path.join(self.font_dir, "reindeer-typewriter.ttf"), 8)
-        
+
+        # load sfx
+        self.assets[AudioType.SFX] = {
+            SFX.HOVER : pygame.mixer.Sound(os.path.join(self.sfx_dir, "hover_SFX.mp3"))
+        }
+
+        # load ost 
+        self.assets[AudioType.OST] = {
+            OST.TITLE : pygame.mixer.Sound(os.path.join(self.ost_dir, "OST #1 Original + Extended.mp3"))
+        }
         # load sprites
         # player:
         self.assets[EntityType.PLAYER] = {
