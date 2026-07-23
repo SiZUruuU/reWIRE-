@@ -11,7 +11,7 @@ GENERATOR_DATA = {
     EntityType.STONE_GENERATOR : {
         "resource_type": ResourceType.STONE,
         "cooldown": 5.0,
-        "footprint": (1, 1),
-        "output_offset": (0, 0)
+        "footprint": (2, 2),
+        "output_offset": (0, 1)
     }
 }

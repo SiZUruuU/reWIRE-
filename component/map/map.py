@@ -4,6 +4,7 @@ from ..utils import EntityType, Animation, Direction
 from ..entity import *
 from ..entity.machines.machine import MachineEntity
 from ..entity.generators.generator import get_generator_class
+from ..entity.generators.stone_generator import StoneGenerator
 from pygame import Vector2
 
 # Dict for corner coords to animation sprite:
@@ -25,9 +26,8 @@ CORNER_MAP = {
 # I instantiated generator classes here because
 # of the footprint feature, I either have to rewrite 'place_entity'
 # or do this...
-# Generator classes:
+# Basic Generator classes:
 WoodGenerator = get_generator_class(EntityType.WOOD_GENERATOR)
-
 
 # ABSTRACT CLASS FOR MAPS:
 class BaseMap(ABC):
@@ -38,6 +38,7 @@ class BaseMap(ABC):
         EntityType.FURNACE : Furnace,
         EntityType.SELLBOX : SellBox,
         EntityType.WOOD_GENERATOR : WoodGenerator,
+        EntityType.STONE_GENERATOR : StoneGenerator,
     }
 
     def __init__(self, width, height, world):
@@ -105,11 +106,24 @@ class BaseMap(ABC):
 
         return True
 
+#    def get_covered_tiles(self, x, y, footprint, direction):
+#        fw, fh = footprint
+#        base_offset = [(dx, dy) for dx in range(fw) for dy in range(fh)]
+#        dir_int = (int(direction.x), int(direction.y))
+        # use default direction at first
+#        rotations = {
+#            (-1, 0): lambda ox, oy: (ox, oy),
+#            (0, -1): lambda ox, oy: (-oy, ox),
+#            (1, 0):  lambda ox, oy: (-ox, -oy),
+#            (0, 1):  lambda ox, oy: (oy, -ox),
+#        }
+#        transform = rotations.get(dir_int, lambda ox, oy: (ox, oy))
+#        return [(x + transform(ox, oy)[0], y + transform(ox, oy)[1]) for ox, oy in base_offset]
+
     def get_covered_tiles(self, x, y, footprint, direction):
         fw, fh = footprint
         base_offset = [(dx, dy) for dx in range(fw) for dy in range(fh)]
         dir_int = (int(direction.x), int(direction.y))
-        # use default direction at first
         rotations = {
             (-1, 0): lambda ox, oy: (ox, oy),
             (0, -1): lambda ox, oy: (-oy, ox),
@@ -117,7 +131,12 @@ class BaseMap(ABC):
             (0, 1):  lambda ox, oy: (oy, -ox),
         }
         transform = rotations.get(dir_int, lambda ox, oy: (ox, oy))
-        return [(x + transform(ox, oy)[0], y + transform(ox, oy)[1]) for ox, oy in base_offset]
+        transformed = [transform(ox, oy) for ox, oy in base_offset]
+
+        min_x = min(t[0] for t in transformed)
+        min_y = min(t[1] for t in transformed)
+
+        return [(x + tx - min_x, y + ty - min_y) for tx, ty in transformed]
 
     def resolve_ground_item(self, x, y, entity):
         items = list(self.get_ground_item(x, y))
@@ -177,7 +196,7 @@ class BaseMap(ABC):
             if self.is_tile_valid(nx, ny):
                 neighbor = self.grid[nx][ny]
                 # if it's a belt grab its direction to know where its moving from:
-                if isinstance(neighbor, MachineEntity):
+                if hasattr(neighbor, "direction"):
                     n_dir = (int(neighbor.direction.x), int(neighbor.direction.y))
                     # if the direction it is moving towards is the current belt:
                     if nx + n_dir[0] == x and ny + n_dir[1] == y:

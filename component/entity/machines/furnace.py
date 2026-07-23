@@ -25,8 +25,11 @@ class Furnace(MachineEntity):
         self.footprint = self.FOOTPRINT
         self.width, self.height = 32, 64
         self.animation_speed = 2.5
-        self.entry = self.entry + Vector2(0, self.world.game.TILE_SIZE/2)
-        self.exit = self.exit + Vector2(0, self.world.game.TILE_SIZE/2)
+
+        size = world.game.TILE_SIZE
+        nudge = self.rotate_offset((0, 0.5))
+        self.entry = self.entry + Vector2(nudge[0] * size, nudge[1] * size)
+        self.exit = self.exit + Vector2(nudge[0] * size, nudge[1] * size)
 
         self.fuel_left = 0
         self.recipes = {

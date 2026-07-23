@@ -36,6 +36,8 @@ def get_world_mousePos(game, camera):
 def check_tile_at(world_x, world_y, game, grid_map):
     tile_x = int(world_x // game.TILE_SIZE)
     tile_y = int(world_y // game.TILE_SIZE)
+    if tile_x < 0 or tile_y < 0:
+        return None
     try:
         tile = grid_map[tile_x][tile_y]
     except IndexError:

@@ -27,6 +27,11 @@ class Conveyor(MachineEntity):
         
         if self.items and self.items[0]["progress"] >= 1.0:
             self.try_pass()
+
+    def get_port(self, tile_x, tile_y, from_direction=None):
+        if from_direction is not None and tuple(from_direction) != tuple(self.incoming_direction):
+            return None
+        return "material"
     
     def sync_position(self, item):
         position = self.entry.lerp(self.exit, item["progress"])
@@ -50,7 +55,7 @@ class Conveyor(MachineEntity):
             self.items.pop(0)
         
     def accept(self, resource, tile_x=None, tile_y=None, from_direction=None):
-        if from_direction is not None and tuple(from_direction) != tuple(self.direction):
+        if from_direction is not None and tuple(from_direction) != tuple(self.incoming_direction):
             return False
         if self.items and self.items[-1]["progress"] < self.min_gap:
             return False
@@ -65,6 +70,7 @@ class Conveyor(MachineEntity):
     
     def apply_corner(self, incoming_direction, outgoing_direction):
         self.direction = outgoing_direction
+        self.incoming_direction = Vector2(incoming_direction)
         size = self.world.game.TILE_SIZE
         center = self.position + Vector2(size/2, size/2)
         self.entry = center - incoming_direction * (size/2)
@@ -73,5 +79,5 @@ class Conveyor(MachineEntity):
     def apply_direction(self, direction):
         self.apply_corner(direction, direction)
 
-    def is_full(self):
+    def is_full(self, port=None):
         return bool(self.items) and self.items[-1]["progress"] < self.min_gap

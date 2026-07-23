@@ -34,8 +34,12 @@ class MachineEntity(BaseEntity):
         self.output_buffer = None
 
         size = self.world.game.TILE_SIZE
-        self.entry = self.position + Vector2(fw * size, fh * size/2 )
-        self.exit = self.position + Vector2(0, fh * size/2)
+        local_entry = (fw, fh / 2)
+        local_exit = (0, fh / 2)
+        rot_entry = self.rotate_continuous_offset(local_entry)
+        rot_exit = self.rotate_continuous_offset(local_exit)
+        self.entry = self.position + Vector2(rot_entry[0] * size, rot_entry[1] * size)
+        self.exit = self.position + Vector2(rot_exit[0] * size, rot_exit[1] * size)
 
         self.recipes = {}
         self.process_time = 0.0
@@ -148,7 +152,7 @@ class MachineEntity(BaseEntity):
         raw_offset = (tile_x - origin_x, tile_y - origin_y)
 
         for local_offset, port_data in self.port_map.items():
-            if self.rotate_offset(local_offset) != raw_offset:
+            if self.rotate_footprint_offset(local_offset) != raw_offset:
                 continue
             expected_dir = self.rotate_offset(port_data["input_direction"])
             if from_direction is not None and tuple(from_direction) != expected_dir:

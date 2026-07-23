@@ -369,11 +369,11 @@ class Game:
         # stone generator
         stone_gen = self.load_frames(
             os.path.join(self.sprite_dir, "stone_generator_spritesheet.png"),
-            0, 0, 63, 64, 3
+            0, 0, 64, 64, 3
         )
         stone_gen_f = self.load_frames(
             os.path.join(self.sprite_dir, "stone_generator_spritesheet.png"),
-            63*3, 0, 63, 64, 3
+            64*3, 0, 64, 64, 3
         )
 
         self.assets[EntityType.STONE_GENERATOR] = {

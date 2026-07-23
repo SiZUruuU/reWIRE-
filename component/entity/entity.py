@@ -59,10 +59,48 @@ class BaseEntity(ABC, pygame.sprite.Sprite):
         }
         transform = rotations.get(dir_int, lambda ox, oy: (ox, oy))
         return transform(*offset)
+    
+    def rotate_footprint_offset(self, offset):
+        dir_int = (int(self.direction.x), int(self.direction.y))
+        rotations = {
+            (-1, 0): lambda ox, oy: (ox, oy),
+            (0, -1): lambda ox, oy: (-oy, ox),
+            (1, 0):  lambda ox, oy: (-ox, -oy),
+            (0, 1):  lambda ox, oy: (oy, -ox),
+        }
+        transform = rotations.get(dir_int, lambda ox, oy: (ox, oy))
+
+        fw, fh = getattr(self, "footprint", (1, 1))
+        base_offset = [(dx, dy) for dx in range(fw) for dy in range(fh)]
+        transformed_all = [transform(ox, oy) for ox, oy in base_offset]
+        min_x = min(t[0] for t in transformed_all)
+        min_y = min(t[1] for t in transformed_all)
+
+        tx, ty = transform(*offset)
+        return (tx - min_x, ty - min_y)
+
+    def rotate_continuous_offset(self, point):
+        dir_int = (int(self.direction.x), int(self.direction.y))
+        rotations = {
+            (-1, 0): lambda ox, oy: (ox, oy),
+            (0, -1): lambda ox, oy: (-oy, ox),
+            (1, 0):  lambda ox, oy: (-ox, -oy),
+            (0, 1):  lambda ox, oy: (oy, -ox),
+        }
+        transform = rotations.get(dir_int, lambda ox, oy: (ox, oy))
+
+        fw, fh = getattr(self, "footprint", (1, 1))
+        corners = [(0, 0), (fw, 0), (0, fh), (fw, fh)]
+        transformed_corners = [transform(cx, cy) for cx, cy in corners]
+        min_x = min(c[0] for c in transformed_corners)
+        min_y = min(c[1] for c in transformed_corners)
+
+        px, py = transform(*point)
+        return (px - min_x, py - min_y)
 
     def get_output_position(self):
         size = self.world.game.TILE_SIZE
-        rotated = self.rotate_offset(self.output_offset)
+        rotated = self.rotate_footprint_offset(self.output_offset)
         origin = self.position + pygame.Vector2(rotated[0]*size, rotated[1]*size)
         return origin + self.direction * size
 
