@@ -10,7 +10,7 @@ class MachineEntity(BaseEntity):
     PORT_MAP = {
         (0, 0): {
             "port": "material",
-            "input_direction": (1, 0)
+            "input_direction": (-1, 0)
         }
     }
     OUTPUT_OFFSET = (0, 0)
@@ -21,7 +21,6 @@ class MachineEntity(BaseEntity):
         self.port_map = self.PORT_MAP
         self.output_offset = self.OUTPUT_OFFSET
         self.direction = direction
-
         dir_key = Direction((int(direction.x), int(direction.y)))
         self.animations = self.world.game.assets[entity_type][Animation.STRAIGHT][dir_key]
         self.image = self.animations[0]
@@ -122,22 +121,19 @@ class MachineEntity(BaseEntity):
         resource.image.set_alpha(alpha)
 
     def try_release(self):
-        # if there's nothing to release:
         if self.output_buffer is None:
             return
-        # if there is, check if the output tile is open:
         output_position = self.get_output_position()
         size = self.world.game.TILE_SIZE
         tile_x = int(output_position.x // size)
         tile_y = int(output_position.y // size)
-        infront =  check_tile_at(
-            output_position.x, output_position.y, 
+        infront = check_tile_at(
+            output_position.x, output_position.y,
             self.world.game, self.world.map.grid
         )
         if infront is None:
             return
-        # if it is, release the BABY:
-        if infront.accept(self.output_buffer, tile_x, tile_y):
+        if infront.accept(self.output_buffer, tile_x, tile_y, self.direction):
             self.output_buffer = None
 
     # new port checking feature for multi port machines:
@@ -145,12 +141,12 @@ class MachineEntity(BaseEntity):
     def get_port(self, tile_x, tile_y, from_direction=None):
         if tile_x is None or tile_y is None:
             return next(iter(self.port_map.values()))["port"]
-        
+
         size = self.world.game.TILE_SIZE
         origin_x = int(self.position.x // size)
         origin_y = int(self.position.y // size)
         raw_offset = (tile_x - origin_x, tile_y - origin_y)
-    
+
         for local_offset, port_data in self.port_map.items():
             if self.rotate_offset(local_offset) != raw_offset:
                 continue
@@ -166,4 +162,4 @@ class MachineEntity(BaseEntity):
         self.image = self.get_rotated_image(base_frame, direction)
 
     def is_full(self, port="material"):
-        return self.input_buffer.get("material") is not None
+        return self.input_buffer.get(port) is not None
