@@ -1,19 +1,27 @@
 from ..entity import BaseEntity
 from ...utils import EntityType, Direction, Animation, check_tile_at, Layers
-from pygame import Vector2
+from pygame import Vector2, transform
 
 class MachineEntity(BaseEntity):
     # important! when making machines that are bigger than 1x1, make sure
     # to create the footprint data here before passing to __init__
     FOOTPRINT = (1, 1)
-    PORT_MAP = {(0, 0): "material"}
+    # default facing west, material must arrive east
+    PORT_MAP = {
+        (0, 0): {
+            "port": "material",
+            "input_direction": (1, 0)
+        }
+    }
     OUTPUT_OFFSET = (0, 0)
+
     def __init__(self, position: Vector2, direction: Vector2, world, entity_type: EntityType):
         super().__init__(position, world, entity_type)
         self.footprint = self.FOOTPRINT # how much tiles the machine takes up
         self.port_map = self.PORT_MAP
         self.output_offset = self.OUTPUT_OFFSET
         self.direction = direction
+
         dir_key = Direction((int(direction.x), int(direction.y)))
         self.animations = self.world.game.assets[entity_type][Animation.STRAIGHT][dir_key]
         self.image = self.animations[0]
@@ -23,7 +31,7 @@ class MachineEntity(BaseEntity):
         self.rect = self.image.get_rect(topleft=(position.x, position.y))
         
         # Overrided by sub classes:
-        self.input_buffer = {"material": None}
+        self.input_buffer = {p["port"]: None for p in self.port_map.values()}
         self.output_buffer = None
 
         size = self.world.game.TILE_SIZE
@@ -45,12 +53,14 @@ class MachineEntity(BaseEntity):
         self.image = self.get_frame_animation(None, global_time)
 
     def can_accept(self, resource, port="material"):
+        if port is None:
+            return False
         if self.input_buffer.get(port) is not None:
             return False
         return resource.resource_type in self.recipes
 
-    def accept(self, resource, tile_x=None, tile_y=None):
-        port = self.get_port(tile_x, tile_y)
+    def accept(self, resource, tile_x=None, tile_y=None, from_direction=None):
+        port = self.get_port(tile_x, tile_y, from_direction)
         if not self.can_accept(resource, port):
             return False
         self.input_buffer[port] = resource
@@ -131,23 +141,29 @@ class MachineEntity(BaseEntity):
             self.output_buffer = None
 
     # new port checking feature for multi port machines:
-    def get_port(self, tile_x, tile_y):
+    # made it support footprint feature
+    def get_port(self, tile_x, tile_y, from_direction=None):
         if tile_x is None or tile_y is None:
-            return next(iter(self.port_map.values()))
+            return next(iter(self.port_map.values()))["port"]
+        
         size = self.world.game.TILE_SIZE
         origin_x = int(self.position.x // size)
         origin_y = int(self.position.y // size)
-        offset = (tile_x - origin_x, tile_y - origin_y)
-        return self.port_map.get(offset, "material")
-
-    def get_output_position(self):
-        size = self.world.game.TILE_SIZE
-        origin = self.position + Vector2(self.output_offset[0]*size, self.output_offset[1]*size)
-        return origin + self.direction * size
-
+        raw_offset = (tile_x - origin_x, tile_y - origin_y)
+    
+        for local_offset, port_data in self.port_map.items():
+            if self.rotate_offset(local_offset) != raw_offset:
+                continue
+            expected_dir = self.rotate_offset(port_data["input_direction"])
+            if from_direction is not None and tuple(from_direction) != expected_dir:
+                continue
+            return port_data["port"]
+        return None
     
     def apply_direction(self, direction):
         self.direction = direction
-        dir_key = Direction((int(direction.x), int(direction.y)))
-        self.animations = self.world.game.assets[self.entity_type][Animation.STRAIGHT][dir_key]
-        self.image = self.animations[0]        
+        base_frame = self.world.game.assets[self.entity_type][Animation.STRAIGHT][Direction((-1,0))][0]
+        self.image = self.get_rotated_image(base_frame, direction)
+
+    def is_full(self, port="material"):
+        return self.input_buffer.get("material") is not None
