@@ -7,6 +7,7 @@ from component.utils.audio import AudioComp
 class Game:
     def __init__(self):
         # Initalize pygame:
+        pygame.mixer.pre_init(48000, -16, 2, 2158, None)
         pygame.init()
 
         # Set dimension values:
@@ -53,6 +54,8 @@ class Game:
             "key_8":False,
             "key_9":False,
             "key_0":False,
+
+            "sfx_played":False
         }
 
         # Timers:
@@ -219,7 +222,8 @@ class Game:
 
         # load sfx
         self.assets[AudioType.SFX] = {
-            SFX.HOVER : pygame.mixer.Sound(os.path.join(self.sfx_dir, "hover_SFX.mp3"))
+            SFX.HOVER : pygame.mixer.Sound(os.path.join(self.sfx_dir, "hover_SFX.mp3")),
+            SFX.HOTBAR_SELECT :  pygame.mixer.Sound(os.path.join(self.sfx_dir, "hotbar-select_v2_SFX.ogg")),
         }
 
         # load ost 

@@ -77,6 +77,7 @@ class TestWorld(State):
             key_string = f"key_{k+1}"
             if actions[key_string]:
                 self.selected_entity = self.hotbar[k]
+                AudioComp.play_sfx(self, AudioType.SFX, SFX.HOTBAR_SELECT)
                 self.game.reset_key(key_string)
             
         # clear selection:

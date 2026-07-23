@@ -87,6 +87,7 @@ class SFX(Enum):
     HOVER = auto()
     CLICK = auto()
     WALK = auto()
+    HOTBAR_SELECT = auto()
     MACHINE_RUNNING = auto()
     MACHINE_BROKEN = auto()
     MACHINE_PLACED = auto()
