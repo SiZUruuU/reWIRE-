@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from ..utils import EntityType, Animation, Direction
 from ..entity import *
 from ..entity.machines.machine import MachineEntity
-from ..entity.generators.generator import Generator
+from ..entity.generators.generator import get_generator_class
 from pygame import Vector2
 
 # Dict for corner coords to animation sprite:
@@ -22,6 +22,13 @@ CORNER_MAP = {
     ((-1, 0), (0, -1)): Animation.TOPRIGHT_F, # Coming from South, turning West
 }
 
+# I instantiated generator classes here because
+# of the footprint feature, I either have to rewrite 'place_entity'
+# or do this...
+# Generator classes:
+WoodGenerator = get_generator_class(EntityType.WOOD_GENERATOR)
+
+
 # ABSTRACT CLASS FOR MAPS:
 class BaseMap(ABC):
     ENTITY = {
@@ -30,7 +37,7 @@ class BaseMap(ABC):
         EntityType.CRUSHER : Crusher,
         EntityType.FURNACE : Furnace,
         EntityType.SELLBOX : SellBox,
-        EntityType.WOOD_GENERATOR : Generator
+        EntityType.WOOD_GENERATOR : WoodGenerator,
     }
 
     def __init__(self, width, height, world):
@@ -60,7 +67,7 @@ class BaseMap(ABC):
             return False
         old_machine = self.grid[x][y]
         if old_machine is not None:
-            if old_machine.entity_type == entity_type:
+            if old_machine.entity_type == entity_type: #and isinstance(old_machine, Conveyor):
                 old_machine.apply_direction(direction)
                 self.belt_neighbor_recalculation(x, y)
                 next_x = x + int(direction.x)
@@ -71,11 +78,11 @@ class BaseMap(ABC):
 
         entity_class = self.ENTITY[entity_type]
         fw, fh = getattr(entity_class, "FOOTPRINT", (1, 1))
-        covered_tiles = [(x + dx, y + dy) for dx in range(fw) for dy in range(fh)]
+        covered_tiles = self.get_covered_tiles(x, y, (fw, fh), direction)        
 
         for tx, ty in covered_tiles:
             if not self.is_tile_valid(tx, ty) or not self.is_tile_free(tx, ty):
-                return False
+                return False        
 
         entity = entity_class(
             grid * self.world.game.TILE_SIZE,
@@ -83,6 +90,8 @@ class BaseMap(ABC):
             self.world,
             entity_type
         )
+        entity.covered_tiles = covered_tiles
+        entity.rect = entity.rect_from_covered_tiles(covered_tiles)
 
         for tx, ty in covered_tiles:
             self.grid[tx][ty] = entity
@@ -95,6 +104,20 @@ class BaseMap(ABC):
             self.belt_neighbor_recalculation(next_x, next_y)
 
         return True
+
+    def get_covered_tiles(self, x, y, footprint, direction):
+        fw, fh = footprint
+        base_offset = [(dx, dy) for dx in range(fw) for dy in range(fh)]
+        dir_int = (int(direction.x), int(direction.y))
+        # use default direction at first
+        rotations = {
+            (-1, 0): lambda ox, oy: (ox, oy),
+            (0, -1): lambda ox, oy: (-oy, ox),
+            (1, 0):  lambda ox, oy: (-ox, -oy),
+            (0, 1):  lambda ox, oy: (oy, -ox),
+        }
+        transform = rotations.get(dir_int, lambda ox, oy: (ox, oy))
+        return [(x + transform(ox, oy)[0], y + transform(ox, oy)[1]) for ox, oy in base_offset]
 
     def resolve_ground_item(self, x, y, entity):
         items = list(self.get_ground_item(x, y))
