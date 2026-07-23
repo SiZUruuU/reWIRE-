@@ -18,6 +18,18 @@ from component.utils.audio import AudioComp
 # WRONG DISPLAY OF OBJECTS. (ex. object_position = some_value - camera.offset)
 # UTILS are useful for the Enums and a few screen to world coordinates methods such as get_world_mousePos
 
+# Dict for testing pickup system
+PICKUP_DURATIONS = {
+    EntityType.CONVEYOR: 2.0,
+    EntityType.BUZZSAW: 5.0,
+    EntityType.CRUSHER: 5.0,
+    EntityType.FURNACE: 8.5,
+    EntityType.WOOD_GENERATOR: 15.0,
+    EntityType.STONE_GENERATOR: 15.0,
+}
+# prep stage should have zero penalties on machine placement/removal
+PREP_STAGE_PICKUP_DURATION = 0.5
+
 class TestWorld(State):
     def __init__(self, game):
         super().__init__(game)
@@ -60,6 +72,12 @@ class TestWorld(State):
             EntityType.STONE_GENERATOR,
             EntityType.SELLBOX, # DO NOT ADD TO FINAL GAME WORLD
         ]
+
+        # pickup tracking:
+        self.pickup_target = None
+        self.pickup_progress = 0.0
+        self.pickup_required = 0.0
+        self.is_prep_stage = False  # stub until prep/start stage system exists
 
     ## LOGIC RELATED METHODS ##
     def update(self, delta_time, actions):        
@@ -108,6 +126,10 @@ class TestWorld(State):
             AudioComp.play_sfx(self, AudioType.SFX, SFX.HOVER)                      
             self.game.reset_key("LMB")
 
+        # handle machine removal:
+        # no keys needed, functions checks for it
+        self.handle_pickup(actions, mouse)            
+
         # resource placement test:
         if actions["key_f"]:
             position = pygame.Vector2(mouse['world_x'], mouse['world_y'])
@@ -144,9 +166,71 @@ class TestWorld(State):
             self.player.try_interact(self.map, self.game, self.camera)
             self.game.reset_key("space")
 
+   ## MACHINE PICKUP/PLACEMENT LOGIC ##
+    def handle_pickup(self, actions, mouse):
+        tile_x, tile_y = mouse['tile_x'], mouse['tile_y']
+        entity = self.map.grid[tile_x][tile_y] if self.map.is_tile_valid(tile_x, tile_y) else None
+
+        rmb_held = actions["RMB"]
+
+        # cancel if button released, moved to a different tile/entity:
+        if not rmb_held or entity is not self.pickup_target:
+            self.pickup_target = None
+            self.pickup_progress = 0.0
+            self.pickup_required = 0.0
+
+        if not rmb_held or entity is None:
+            return
+
+        if self.pickup_target is None:
+            self.pickup_target = entity
+            print(self.pickup_target)
+            self.pickup_progress = 0.0
+            self.pickup_required = (
+                PREP_STAGE_PICKUP_DURATION if self.is_prep_stage
+                else PICKUP_DURATIONS.get(entity.entity_type, 2.0)
+            )
+
+        self.pickup_progress += self.game.delta_time
+        if self.pickup_progress >= self.pickup_required:
+            self.complete_pickup(entity)
+
+    def complete_pickup(self, entity):
+        covered = getattr(entity, "covered_tiles", None)
+        if covered is None:
+            size = self.game.TILE_SIZE
+            tx = int(entity.position.x // size)
+            ty = int(entity.position.y // size)
+            covered = [(tx, ty)]
+
+        for tx, ty in covered:
+            if self.map.is_tile_valid(tx, ty):
+                self.map.grid[tx][ty] = None
+
+        self.all_sprites.remove(entity)
+
+        # recalc neighboring belts, same as placement does
+        for tx, ty in covered:
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                self.map.belt_neighbor_recalculation(tx + dx, ty + dy)
+
+        self.pickup_target = None
+        self.pickup_progress = 0.0
+        self.pickup_required = 0.0
+
+    # just testing a python feature, heard it's for using methods as data attributes which
+    # removes the use of "()" making it just ".pickup_fill_ratio" perfect for methods that
+    # doesn't have params and returns a value
+    @property
+    def pickup_fill_ratio(self):
+        if self.pickup_target is None or self.pickup_required <= 0:
+            return 0.0
+        return min(self.pickup_progress / self.pickup_required, 1.0)    
 
 
-    ## DISPLAY RELATED METHODS ##
+    ##
+    ## DISPLAY RELATED METHODS
+    ##
     # main render method, call any rendering here
     def render(self, display):
         display.fill((50, 60, 90))
@@ -172,6 +256,9 @@ class TestWorld(State):
 
         # cash amount:
         self.draw_cash_display(display)
+
+        # progress bar for machine pickup:
+        self.draw_pickup_bar(display)
 
     # shows green or red tinted entity ghost preview
     # red = invalid, green = valid
@@ -266,3 +353,20 @@ class TestWorld(State):
         bg.fill((0, 0, 0, 150))
         display.blit(bg, (text_rect.x - 8, text_rect.y - 5))
         display.blit(text, text_rect)
+
+    # display a small progress bar when picking up machines:
+    def draw_pickup_bar(self, display):
+        if self.pickup_target is None:
+            return
+
+        mx, my = pygame.mouse.get_pos()
+        scaled_x = mx * (self.game.GAME_WIDTH / self.game.SCREEN_WIDTH)
+        scaled_y = my * (self.game.GAME_HEIGHT / self.game.SCREEN_HEIGHT)
+
+        bar_width, bar_height = 40, 6
+        x = scaled_x - bar_width // 2
+        y = scaled_y + 18
+
+        pygame.draw.rect(display, (40, 40, 40), (x, y, bar_width, bar_height))
+        pygame.draw.rect(display, (220, 60, 60), (x, y, int(bar_width * self.pickup_fill_ratio), bar_height))
+        pygame.draw.rect(display, (10, 10, 10), (x, y, bar_width, bar_height), 1)

@@ -19,12 +19,12 @@ Features to add:
 - Main gameplay
     
     current features needed to add:
-    - machine pickup, each machine takes time to get removed
-    - conveyors = 2.0s
-    - buzzsaw, crusher = 5.0s
-    - furnace = 8.5s
-    - any generators = 15.0s
-    NOTE: during prep stage, placement and machine pickup takes only 0.5s
+    - machine pickup, each machine takes time to get removed [DONE]
+    - conveyors = 2.0s [DONE]
+    - buzzsaw, crusher = 5.0s [DONE]
+    - furnace = 8.5s [DONE]
+    - any generators = 15.0s [DONE]
+    NOTE: during prep stage, placement and machine pickup takes only 0.5s [DONE]
 
     - factory level:
         - play factory OST

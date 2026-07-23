@@ -13,7 +13,7 @@ class Generator(BaseEntity):
     def __init__(self, position, direction, world, generator_type):
         super().__init__(position, world, EntityType.GENERATOR)
         self.direction = direction
-        self.generator_type = generator_type
+        self.entity_type = generator_type
 
         data = GENERATOR_DATA[generator_type]
         self.resource_type = data["resource_type"]
