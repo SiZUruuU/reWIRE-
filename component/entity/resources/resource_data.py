@@ -2,12 +2,12 @@ from ...utils import ResourceType
 
 # Data holder for the different kinds of resources
 RESOURCE_DATA = {
-    ResourceType.WOOD : {"value": 2.5},
-    ResourceType.BOARDS : {"value": 4.375},
-    ResourceType.CHARCOAL : {"value": 3.75},
+    ResourceType.WOOD : {"value": 0.30},
+    ResourceType.BOARDS : {"value": 1.20},
+    ResourceType.CHARCOAL : {"value": 0.85},
     
-    ResourceType.STONE : {"value": 3.5},
-    ResourceType.STONE_BLOCKS : {"value": 6.125},
-    ResourceType.SAND : {"value": 1.5},
-    ResourceType.GLASS : {"value": 4.125}
+    ResourceType.STONE : {"value": 0.45},
+    ResourceType.STONE_BLOCKS : {"value": 1.50},
+    ResourceType.SAND : {"value": 0.25},
+    ResourceType.GLASS : {"value": 2.85}
 }
