@@ -339,7 +339,7 @@ class Game:
             0, 0, 64, 34, 3
         )
 
-        self.assets[EntityType.WOOD_GENERATOR ] = {
+        self.assets[EntityType.WOOD_GENERATOR] = {
             Animation.STRAIGHT: {
                 Direction.NORTH: [pygame.transform.rotate(f, -90) for f in wood_gen],
                 Direction.SOUTH: [pygame.transform.rotate(f, 90) for f in wood_gen],
