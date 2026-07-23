@@ -54,6 +54,11 @@ class ResourceType(Enum):
     GLASS = "glass"
 
     CHARCOAL = "charcoal"
+
+    # These resources are for the economoy features:
+    GEAR = "gear"
+    PLATE = "plate"
+    ENGINE = "engine"
     
 class Animation(Enum):
     # for player:
