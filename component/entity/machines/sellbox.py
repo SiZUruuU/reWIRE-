@@ -17,7 +17,7 @@ class SellBox(MachineEntity):
             return False
         return True # should accept anything
 
-    def accept(self, resource, tile_x=None, tile_y=None):
+    def accept(self, resource, tile_x=None, tile_y=None, from_direction=None):
         port = self.get_port(tile_x, tile_y)
         if not self.can_accept(resource, port):
             return False
