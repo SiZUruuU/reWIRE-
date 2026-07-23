@@ -1,0 +1,80 @@
+Features to add:
+
+- Sell effect
+- Sell sfx
+
+- Machine sfx
+    - conveyor
+    - buzzsaw
+    - crusher
+    - furnace
+    - generator
+
+- Player sfx
+    - walk
+    - place machine
+    - pickup item
+    - drop item
+
+- Main gameplay
+    
+    current features needed to add:
+    - machine pickup, each machine takes time to get removed
+    - conveyors = 2.0s
+    - buzzsaw, crusher = 5.0s
+    - furnace = 8.5s
+    - any generators = 15.0s
+    NOTE: during prep stage, placement and machine pickup takes only 0.5s
+
+    - factory level:
+        - play factory OST
+        - 2 stages: prep stage, and start stage
+        - prep stage allows placing of machines
+        - start stage still allows placement but a LOT slower
+        - 3 minutes timer per day
+        - lerp a filter to synthesize day and night cycle        
+        - cash tracking GUI
+        - machine hotbar GUI        
+        - sellbox should be a pickup truck
+        - cash quota, if met = win, if not lose (back to day 1)
+        - quota should subtract the total cash [total cash - (quota*0.5)]
+
+    - office level:
+        - play office OST
+        - no building, remove factory level features
+        - cash tracking GUI
+        - bed entity = next day
+        - office table entity = shop
+        - shop GUI browse resources to build machines
+        - workshop entity = use resources to build machines
+
+        Machine recipes:
+        - conveyor = {
+            3 gears, 3 plates
+        }
+
+        - buzzsaw = {
+            1 engine, 3 gears, 2 plates
+        }
+
+        - crusher = {
+            1 engine, 6 gears, 10 plates
+        }
+
+        - furnace = {
+            1 engine, 12 gears, 20 plates
+        }
+
+        - wood generator = {
+            2 engines, 30 gears, 30 plates
+        }
+
+        - stone generator = {
+            3 engines, 50 gears, 50 plates
+        }
+    
+    Advanced features, if possible to apply before deadline:
+    - machine breaking down feature (MOST IMPORTANT FEATURE)
+    - when machine breaks down player must rewire it
+    - broken machines becomes inefficient taking longer to make things
+    - small chance to fully break

@@ -8,6 +8,5 @@ class AudioComp:
 
     def play_sfx(self, audio_type, sfx_name):
         sfx = self.game.assets[audio_type][sfx_name]
-        print('Audio played')
         sfx.stop()
         sfx.play()
