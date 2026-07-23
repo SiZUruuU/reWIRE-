@@ -217,8 +217,8 @@ class Game:
         
         # load fonts:
         self.assets[Fonts.TITLE] = pygame.font.Font(os.path.join(self.font_dir, "retganon.ttf"), 18)
-        self.assets[Fonts.HEADER] = pygame.font.Font(os.path.join(self.font_dir, "HomeVideo-Bold.ttf"), 12)
-        self.assets[Fonts.BODY] = pygame.font.Font(os.path.join(self.font_dir, "reindeer-typewriter.ttf"), 8)
+        self.assets[Fonts.HEADER] = pygame.font.Font(os.path.join(self.font_dir, "HomeVideo-Bold.ttf"), 16)
+        self.assets[Fonts.BODY] = pygame.font.Font(os.path.join(self.font_dir, "reindeer-typewriter.ttf"), 12)
 
         # load sfx
         self.assets[AudioType.SFX] = {
