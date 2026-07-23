@@ -5,11 +5,13 @@ GENERATOR_DATA = {
     EntityType.WOOD_GENERATOR : {
         "resource_type": ResourceType.WOOD, 
         "cooldown": 3.5, # cooldown to produce the next resource
-        "footprint": (2, 1) # if you haven't seen machine.py footprint is essentially the amount of tiles a macine occupies
+        "footprint": (2, 1), # if you haven't seen machine.py footprint is essentially the amount of tiles a macine occupies
+        "output_offset": (0, 0)
     },
     EntityType.STONE_GENERATOR : {
         "resource_type": ResourceType.STONE,
         "cooldown": 5.0,
-        "footprint": (1, 1)
+        "footprint": (1, 1),
+        "output_offset": (0, 0)
     }
 }
