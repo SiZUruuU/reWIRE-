@@ -15,8 +15,8 @@ class Furnace(MachineEntity):
     # to create the footprint here before passing to __init__
     FOOTPRINT = (1, 2)
     PORT_MAP = {
-        (0, 0): "fuel",
-        (0, 1): "material",        
+        (0, 0): {"port": "fuel",     "input_direction": (-1, 0)},
+        (0, 1): {"port": "material", "input_direction": (-1, 0)},
     }
     OUTPUT_OFFSET = (0, 1)
 
@@ -24,40 +24,29 @@ class Furnace(MachineEntity):
         super().__init__(position, direction, world, entity_type)
         self.footprint = self.FOOTPRINT
         self.width, self.height = 32, 64
-        self.animation_speed = 2.5 # in seconds
+        self.animation_speed = 2.5
         self.entry = self.entry + Vector2(0, self.world.game.TILE_SIZE/2)
         self.exit = self.exit + Vector2(0, self.world.game.TILE_SIZE/2)
 
-        self.input_buffer = {
-            "fuel": None, "material": None
-        }
         self.fuel_left = 0
-
         self.recipes = {
-            ResourceType.WOOD : {
-                "output": ResourceType.CHARCOAL, "duration": 4.0
-            },
-            ResourceType.SAND : {
-                "output": ResourceType.GLASS, "duration": 6.0
-            }
+            ResourceType.WOOD: {"output": ResourceType.CHARCOAL, "duration": 4.0},
+            ResourceType.SAND: {"output": ResourceType.GLASS, "duration": 6.0},
         }
 
-        dir_key = Direction((int(direction.x), int(direction.y)))
-        self.animations = {
-            Animation.INACTIVE: world.game.assets[EntityType.FURNACE][Animation.STRAIGHT][dir_key],
-            Animation.ACTIVE: world.game.assets[EntityType.FURNACE][Animation.ACTIVE][dir_key]
-        }         
-        self.image = self.animations[Animation.INACTIVE][0]
+        self.apply_direction(direction)   # <- last line; sets self.image, no dead code after it
     
     def can_accept(self, resource, port):
+        if port is None:
+            return False
         if self.input_buffer.get(port) is not None:
             return False
         if port == "fuel":
             return resource.resource_type in FUEL_VALUES
         return resource.resource_type in self.recipes
     
-    def accept(self, resource, tile_x=None, tile_y=None):
-        port = self.get_port(tile_x, tile_y)
+    def accept(self, resource, tile_x=None, tile_y=None, from_direction=None):
+        port = self.get_port(tile_x, tile_y, from_direction)
         if not self.can_accept(resource, port):
             return False
         self.input_buffer[port] = resource
@@ -111,7 +100,20 @@ class Furnace(MachineEntity):
         self.is_processing = False
         self.process_time = 0.0
         self.active_recipe = None
-    
+
+    # found the problem, the parent class' apply_direction
+    # assumes an entity to have Animation.STRAIGHT, but furnace
+    # is a unique entity, therefore there would be errors in checking
+    # for sprites called Animation.STRAIGHT as furnace uses Animation.ACTIVE/.INACTIVE
+    def apply_direction(self, direction):
+        self.direction = direction
+        dir_key = Direction((int(direction.x), int(direction.y)))
+        self.rotated_inactive = self.world.game.assets[EntityType.FURNACE][Animation.STRAIGHT][dir_key]
+        self.rotated_active = self.world.game.assets[EntityType.FURNACE][Animation.ACTIVE][dir_key]
+        self.image = self.rotated_inactive[0]
+
     def animate(self, global_time):
-        state = Animation.ACTIVE if self.input_buffer.get("fuel") is not None else Animation.INACTIVE
-        self.image = self.get_frame_animation(state, global_time)
+        frames = self.rotated_active if self.input_buffer.get("fuel") is not None else self.rotated_inactive
+        total = len(frames)
+        frame_index = int(global_time * self.animation_speed) % total
+        self.image = frames[frame_index]
