@@ -25,6 +25,9 @@ class PlayerEntity(BaseEntity):
         self.state = Animation.IDLE
         self.held_item = None  
 
+        self.shadow_image = pygame.Surface((30, 10), pygame.SRCALPHA)
+        pygame.draw.ellipse(self.shadow_image, (0, 0, 0, 90), self.shadow_image.get_rect())
+
         # player attributes
         self.speed = 50
 
