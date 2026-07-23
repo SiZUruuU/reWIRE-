@@ -26,7 +26,7 @@ Features to add:
     - any generators = 15.0s [DONE]
     NOTE: during prep stage, placement and machine pickup takes only 0.5s [DONE]
 
-    - factory level:
+    - factory level: [WORKING]
         - play factory OST
         - 2 stages: prep stage, and start stage
         - prep stage allows placing of machines

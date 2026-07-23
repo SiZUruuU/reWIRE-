@@ -22,6 +22,7 @@ PICKUP_DURATIONS = {
     EntityType.STONE_GENERATOR: 15.0,
 }
 
+# p.s for method explanations etc, check test world. Code here should be clean.
 class FactoryLevel(State):
     def __init__(self, game, economy=None):
         super().__init__(game)
@@ -171,11 +172,10 @@ class FactoryLevel(State):
     ## DAY/STAGE/QUOTA LOGIC
     def end_day(self):
         self.day_ended = True
-        self.is_prep_stage = True  # next day always reopens in prep
-        # Assumption: quota check subtracts half the quota from cash regardless of outcome,
-        # per your spec "total cash - (quota*0.5)" — confirm this applies win AND lose, or win only.
+        self.is_prep_stage = True
         if self.economy.cash >= CASH_QUOTA:
-            self.economy.cash -= int(CASH_QUOTA * 0.5)
+            # TODO: increment quota per win 
+            self.economy.cash -= int(CASH_QUOTA * 0.5)            
             self.on_day_won()
         else:
             self.on_day_lost()
