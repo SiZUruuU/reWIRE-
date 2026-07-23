@@ -16,19 +16,19 @@ class Generator(BaseEntity):
         self.resource_type = data["resource_type"]
         self.cooldown = data["cooldown"]
         self.footprint = data["footprint"]
+        self.output_offset = data.get("output_offset", (0, 0))
+        self.output_position = self.get_output_position()
 
         self.timer = 0.0
         self.output_buffer = None
 
-        dir_key = Direction(direction.x, direction.y)
+        dir_key = Direction((int(direction.x), int(direction.y)))
         self.animation_speed = 10.0
         self.animations = world.game.assets[generator_type][Animation.STRAIGHT][dir_key]
         self.image = self.animations[0]
         self.rect = self.image.get_rect(topleft=(position.x, position.y))
         self.width = self.image.get_width()
         self.height = self.image.get_height()
-
-        print(f"WIDTH:{self.width}, HEIGHT:{self.height}")
 
     def update(self, global_time, delta_time, actions):
         if self.output_buffer is None:
@@ -40,6 +40,14 @@ class Generator(BaseEntity):
         self.animate(global_time)
 
     def generate(self):
+        # check if there's even a place to release the item:
+        output_position = self.output_position
+        infront = check_tile_at(output_position.x, output_position.y, self.world.game, self.world.map.grid)
+        if infront is None:
+            return
+        if infront.is_full():
+            return
+        # if there is, create the item:
         spawn_position = self.position
         self.output_buffer = ResourceEntity(
             spawn_position, self.world, self.resource_type
@@ -48,12 +56,13 @@ class Generator(BaseEntity):
     def try_release(self):
         if self.output_buffer is None:
             return
-
-        output_positon = self.position + self.direction * self.world.game.TILE_SIZE
-        infront = check_tile_at(output_positon.x, output_positon.y, self.world.game, self.world.map.grid)
+        output_position = self.output_position
+        infront = check_tile_at(output_position.x, output_position.y, self.world.game, self.world.map.grid)
         if infront is None:
-            return
-        if infront.accept(self.output_buffer):
+            return    
+        tile_x = int(output_position.x // self.world.game.TILE_SIZE)
+        tile_y = int(output_position.y // self.world.game.TILE_SIZE)
+        if infront.accept(self.output_buffer, tile_x, tile_y):
             self.output_buffer = None
 
     def animate(self, global_time):
@@ -61,3 +70,16 @@ class Generator(BaseEntity):
 
     def apply_direction(self, direction):
         self.direction = direction
+
+def get_generator_class(generator_type):
+    data = GENERATOR_DATA[generator_type]
+
+    class _Generator(Generator):
+
+        FOOTPRINT = data["footprint"]
+
+        def __init__(self, position, direction, world, generator_type):
+            super().__init__(position, direction, world, generator_type)
+
+    _Generator.__name__ = f"Generator_{generator_type}"
+    return _Generator
