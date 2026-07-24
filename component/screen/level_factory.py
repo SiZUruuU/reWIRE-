@@ -219,8 +219,8 @@ class FactoryLevel(State):
         self.day_ended = True
         self.is_prep_stage = True
         if self.economy.cash >= STARTING_QUOTA:
-            # TODO: increment quota per win 
-            self.economy.cash -= int(STARTING_QUOTA * 0.5)            
+            self.quota = round(self.quota + self.quota * 0.25, 5)
+            self.economy.cash = round(self.economy.cash - int(STARTING_QUOTA * 0.5), 5)
             self.on_day_won()
         else:
             self.on_day_lost()
