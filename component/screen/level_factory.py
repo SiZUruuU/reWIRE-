@@ -12,8 +12,9 @@ from .economy import Economy
 
 # FACTORY LEVEL CONFIG
 DAY_DURATION = 180.0 # 3 minutes
-STARTING_QUOTA = 150.50
+STARTING_QUOTA = 100
 PREP_STAGE_PICKUP_DURATION = 0.5
+DOOR_HOLD_DURATION = 3.0
 PICKUP_DURATIONS = {
     EntityType.CONVEYOR: 2.0,
     EntityType.BUZZSAW: 5.0,
@@ -99,17 +100,25 @@ class FactoryLevel(State):
         self.day_timer = 0.0
         self.day_ended = False
 
-        self.night_overlay = pygame.Surface((self.WIDTH, self.HEIGHT), pygame.SRCALPHA)        
+        self.door_position = (24, 4)
+        self.door_hold_progress = 0.0
+
+        self.day_over = False
+
+        self.night_overlay = pygame.Surface((self.WIDTH, self.HEIGHT), pygame.SRCALPHA)
+        self.day_duration = DAY_DURATION
+
+        self.debug_mode = False
 
         AudioComp.play_ost(self, AudioType.OST, OST.TITLE)
 
 
     ## LOGIC METHODS ##
     def update(self, delta_time, actions):
-        if not self.day_ended and not self.is_prep_stage:
+        if not self.day_ended and not self.is_prep_stage and not self.day_over:
             self.day_timer += delta_time*10
             if self.day_timer >= DAY_DURATION:
-                self.end_day()
+                self.day_over = True
 
         self.handle_inputs(actions)
         self.all_sprites.update(self.game.global_time, delta_time, actions)
@@ -161,6 +170,19 @@ class FactoryLevel(State):
         if actions["key_enter"] and self.is_prep_stage:
             self.start_stage_transition()
             self.game.reset_key("key_enter")
+
+        # end day, go to door and hold 'e', only works if day is done
+        if self.day_over and self.door_position is not None:
+            self.handle_door_interact(actions)
+
+        # enable debug mode
+        if actions["Lctrl"] and actions["key_d"]:
+            if not self.debug_mode:
+                self.debug_mode = True
+            else:
+                self.debug_mode = False
+            self.game.reset_key("Lctrl")
+            self.game.reset_key("key_d")
 
     ## PICKUP LOGIC 
     def handle_pickup(self, actions, tile_x, tile_y):
@@ -237,8 +259,25 @@ class FactoryLevel(State):
             return 0.0
         return min(self.pickup_progress / self.pickup_required, 1.0)
 
+    def handle_door_interact(self, actions):
+        player_tile_x, player_tile_y = self.map.world_to_absolute_tile(
+            self.player.rect.centerx, self.player.rect.centery
+        )
+        door_x, door_y = self.door_position
+
+        self.is_near_door = max(abs(player_tile_x - door_x), abs(player_tile_y - door_y)) <= 1
+
+        if self.is_near_door and actions["interact"]:
+            self.door_hold_progress += self.game.delta_time
+            if self.door_hold_progress >= DOOR_HOLD_DURATION:
+                self.door_hold_progress = 0.0
+                self.end_day()
+        else:
+            self.door_hold_progress = 0.0
+
     ## DAY/STAGE/QUOTA LOGIC
     def end_day(self):
+        self.day_over = False
         self.day_ended = True
         self.is_prep_stage = True
         if self.economy.cash >= STARTING_QUOTA:
@@ -299,6 +338,9 @@ class FactoryLevel(State):
         self.draw_day_timer(display)
         self.draw_prep_text(display)
         self.draw_quota(display)
+        self.draw_day_over_text(display)
+        self.draw_door_prompt(display)
+        self.draw_door_debug(display)
 
     @staticmethod
     def _lerp_color(c1, c2, t):
@@ -454,4 +496,83 @@ class FactoryLevel(State):
         self.night_overlay.fill((20, 1, 26, alpha))
         screen_x = -self.camera.offset.x
         screen_y = -self.camera.offset.y
-        display.blit(self.night_overlay, (screen_x, screen_y))        
+        display.blit(self.night_overlay, (screen_x, screen_y))
+
+    def draw_day_over_text(self, display):
+        if not self.day_over:
+            return
+        font = self.game.assets[Fonts.HEADER]
+        text = font.render("DAY COMPLETE! head to the door", True, (255, 230, 120))
+        text_rect = text.get_rect(midtop=(self.game.GAME_WIDTH // 2, 10))
+        bg = pygame.Surface((text_rect.width + 20, text_rect.height + 10), pygame.SRCALPHA)
+        bg.fill((0, 0, 0, 150))
+        display.blit(bg, (text_rect.x - 10, text_rect.y - 5))
+        display.blit(text, text_rect)
+
+    def draw_door_prompt(self, display):
+        if not self.day_over or not self.is_near_door:
+            return
+
+        tile_size = self.game.TILE_SIZE
+        world_x, world_y = self.map.absolute_tile_to_world(*self.door_position)
+        screen_x = world_x - self.camera.offset.x
+        screen_y = world_y - self.camera.offset.y - 30
+
+        font = self.game.assets[Fonts.BODY]
+        text = font.render("Hold 'E'", True, (255, 230, 120))
+        text_rect = text.get_rect(center=(screen_x + tile_size // 2, screen_y))
+
+        bg = pygame.Surface((text_rect.width + 12, text_rect.height + 6), pygame.SRCALPHA)
+        bg.fill((0, 0, 0, 160))
+        display.blit(bg, (text_rect.x - 6, text_rect.y - 3))
+        display.blit(text, text_rect)
+
+        if self.door_hold_progress > 0:
+            ratio = min(self.door_hold_progress / DOOR_HOLD_DURATION, 1.0)
+            bar_w, bar_h = 40, 6
+            bx = text_rect.centerx - bar_w // 2
+            by = text_rect.bottom + 4
+
+            pygame.draw.rect(display, (40, 40, 40), (bx, by, bar_w, bar_h))
+            pygame.draw.rect(display, (100, 255, 100), (bx, by, int(bar_w * ratio), bar_h))
+            pygame.draw.rect(display, (10, 10, 10), (bx, by, bar_w, bar_h), 1)
+
+
+    # debug
+    def draw_door_debug(self, display):
+        if self.debug_mode:
+            if self.door_position is None:
+                return
+
+            tile_size = self.game.TILE_SIZE
+            door_x, door_y = self.door_position
+
+            # the door tile itself, in red
+            world_x, world_y = self.map.absolute_tile_to_world(door_x, door_y)
+            screen_x = world_x - self.camera.offset.x
+            screen_y = world_y - self.camera.offset.y
+            door_rect = pygame.Rect(screen_x, screen_y, tile_size, tile_size)
+            pygame.draw.rect(display, (255, 0, 0), door_rect, 2)
+
+            # the 3x3 trigger zone
+            for dx in (-1, 0, 1):
+                for dy in (-1, 0, 1):
+                    tx, ty = door_x + dx, door_y + dy
+                    wx, wy = self.map.absolute_tile_to_world(tx, ty)
+                    sx = wx - self.camera.offset.x
+                    sy = wy - self.camera.offset.y
+                    zone_rect = pygame.Rect(sx, sy, tile_size, tile_size)
+                    pygame.draw.rect(display, (255, 255, 0), zone_rect, 1)
+
+            # player's current tile relative to the zone
+            player_tile_x, player_tile_y = self.map.world_to_absolute_tile(self.player.rect.centerx, self.player.rect.centery)
+            pwx, pwy = self.map.absolute_tile_to_world(player_tile_x, player_tile_y)
+            psx = pwx - self.camera.offset.x
+            psy = pwy - self.camera.offset.y
+            pygame.draw.rect(display, (0, 255, 255), (psx, psy, tile_size, tile_size), 2)
+
+            # print actual distance check
+            font = self.game.assets[Fonts.BODY]
+            near = getattr(self, "is_near_door", False)
+            text = font.render(f"near_door={near} day_over={self.day_over} hold={self.door_hold_progress:.2f}", True, (255, 255, 255))
+            display.blit(text, (10, self.game.GAME_HEIGHT - 30))
