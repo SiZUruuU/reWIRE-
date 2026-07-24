@@ -34,7 +34,7 @@ class Generator(BaseEntity):
         self.height = self.image.get_height()
 
     def update(self, global_time, delta_time, actions):
-        if self.world.is_prep_stage:
+        if self.world.is_prep_stage or self.world.day_over:
             self.animate(global_time)
             return
         if self.output_buffer is None:

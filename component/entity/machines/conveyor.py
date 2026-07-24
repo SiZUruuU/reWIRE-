@@ -15,7 +15,7 @@ class Conveyor(MachineEntity):
 
     def update(self, global_time, delta_time, actions):
         self.animate(global_time)
-        if self.world.is_prep_stage:
+        if self.world.is_prep_stage or self.world.day_over:
             return
         self.move_items(delta_time)
         
