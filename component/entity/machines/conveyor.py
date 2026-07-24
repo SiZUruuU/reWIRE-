@@ -15,6 +15,8 @@ class Conveyor(MachineEntity):
 
     def update(self, global_time, delta_time, actions):
         self.animate(global_time)
+        if self.world.is_prep_stage:
+            return
         self.move_items(delta_time)
         
     def move_items(self, delta_time):
@@ -29,7 +31,7 @@ class Conveyor(MachineEntity):
             self.try_pass()
 
     def get_port(self, tile_x, tile_y, from_direction=None):
-        if from_direction is not None and tuple(from_direction) != tuple(self.incoming_direction):
+        if from_direction is not None and tuple(from_direction) == tuple(-self.direction):
             return None
         return "material"
     
@@ -53,7 +55,7 @@ class Conveyor(MachineEntity):
             self.items.pop(0)
         
     def accept(self, resource, tile_x=None, tile_y=None, from_direction=None):
-        if from_direction is not None and tuple(from_direction) != tuple(self.incoming_direction):
+        if from_direction is not None and tuple(from_direction) == tuple(-self.direction):
             return False
         if self.items and self.items[-1]["progress"] < self.min_gap:
             return False

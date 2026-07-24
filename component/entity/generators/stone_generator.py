@@ -95,7 +95,7 @@ class StoneGenerator(Generator):
         frame_index = int(global_time * self.animation_speed) % total
         self.image = frames[frame_index]
 
-        if self.output_buffer is None and self.input_buffer.get("fuel") is not None:
+        if not self.world.is_prep_stage and self.output_buffer is None and self.input_buffer.get("fuel") is not None:
             self.apply_shake(self.position, self.timer, self.cooldown, max_intensity=1.0)
         else:
             self.rect.topleft = (int(self.position.x), int(self.position.y))

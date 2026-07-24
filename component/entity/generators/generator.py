@@ -34,13 +34,16 @@ class Generator(BaseEntity):
         self.height = self.image.get_height()
 
     def update(self, global_time, delta_time, actions):
+        if self.world.is_prep_stage:
+            self.animate(global_time)
+            return
         if self.output_buffer is None:
             self.timer += delta_time
             if self.timer >= self.cooldown:
                 self.timer = 0.0
                 self.generate()
         self.try_release()
-        self.animate(global_time)     
+        self.animate(global_time)  
 
     def generate(self):
         output_position = self.output_position
@@ -72,7 +75,7 @@ class Generator(BaseEntity):
             self.output_buffer = None
 
     def animate(self, global_time):
-        if self.output_buffer is None:
+        if not self.world.is_prep_stage and self.output_buffer is None:
             elapsed = self.timer
             self.apply_shake(self.position, elapsed, self.cooldown, max_intensity=0.5)
         else:

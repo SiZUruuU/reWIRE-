@@ -47,6 +47,9 @@ class MachineEntity(BaseEntity):
         self.active_recipe = None
     
     def update(self, global_time, delta_time, actions):
+        if self.world.is_prep_stage:
+            self.animate(global_time)
+            return
         self.process(delta_time)
         self.sync_resource()
         self.try_release()
