@@ -1,6 +1,6 @@
 import pygame, os, time
 from component.screen.title_screen import TitleScreen
-from component.utils import EntityType, Animation, Direction, Fonts, ResourceType
+from component.utils import EntityType, Animation, Direction, Fonts, ResourceType, WorldType, Layers
 from component.utils.enums import AudioType, OST, SFX
 from component.utils.audio import AudioComp
 
@@ -393,6 +393,12 @@ class Game:
                 Direction.EAST: [pygame.transform.rotate(f, 180) for f in stone_gen_f],
                 Direction.WEST: stone_gen_f,
             }
+        }
+
+        # factory sprite
+        self.assets[WorldType.FACTORY] = {
+            Layers.FLOOR_0 : self.load_frame(os.path.join(self.sprite_dir, "factory_sprite.png")),
+            Layers.FRONT_1 : self.load_frame(os.path.join(self.sprite_dir, "factory_sprite_foreground.png")),
         }
 
     # helper method for loading assets:
