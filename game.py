@@ -12,10 +12,10 @@ class Game:
 
         # Set dimension values:
         # game world size
-        self.GAME_WIDTH, self.GAME_HEIGHT = 384, 192        
+        self.GAME_WIDTH, self.GAME_HEIGHT = 384*2, 192*2
         self.TILE_SIZE = 32
-        # upscale size - basically just thrice the game surface
-        self.SCREEN_WIDTH, self.SCREEN_HEIGHT = self.GAME_WIDTH*3, self.GAME_HEIGHT*3
+        # upscale size - basically just twice the game surface
+        self.SCREEN_WIDTH, self.SCREEN_HEIGHT = self.GAME_WIDTH*1.5, self.GAME_HEIGHT*1.5
 
         # Create game world and display surface:
         # game_canvas is where the game logic happens so use this for world coords
@@ -41,6 +41,8 @@ class Game:
             "key_b":False, #Build mode
             "key_r":False, #Conveyer rotate key
             "key_q":False, #Clear hotbar key
+            "key_enter":False,
+
             "key_f":False, #Item spawn test key WOOD
             "key_g":False, #Item spawn test key STONE
 
@@ -131,8 +133,10 @@ class Game:
                     self.action_keys["key_q"] = True
                 if event.key == pygame.K_0:
                     self.action_keys["key_0"] = True
+                if event.key == pygame.K_RETURN:
+                    self.action_keys["key_enter"] = True
                 
-                # item spawn test
+                # item spawn test - not needed
                 if event.key == pygame.K_f:
                     self.action_keys["key_f"] = True
                 if event.key == pygame.K_g:
