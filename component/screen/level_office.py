@@ -1,4 +1,5 @@
-# TODO create class for the office world
-# no machines or any factory level features
-# should just be cash, shop, and a bed to go to the next day
-# play OST - Office
+from .states import State
+
+class OfficeLevel(State):
+    def __init__(self, game):
+        super().__init__(game)
