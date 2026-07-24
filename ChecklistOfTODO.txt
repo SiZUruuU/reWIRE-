@@ -28,16 +28,16 @@ Features to add:
 
     - factory level: [WORKING]
         - play factory OST
-        - 2 stages: prep stage, and start stage
-        - prep stage allows placing of machines
-        - start stage still allows placement but a LOT slower
-        - 3 minutes timer per day
-        - lerp a filter to synthesize day and night cycle        
-        - cash tracking GUI
-        - machine hotbar GUI        
+        - 2 stages: prep stage, and start stage [DONE]
+        - prep stage allows placing of machines [DONE] 
+        - start stage still allows placement but a LOT slower [DONE]
+        - 3 minutes timer per day [DONE]
+        - lerp a filter to synthesize day and night cycle [ONGOING]
+        - cash tracking GUI [DONE]
+        - machine hotbar GUI [ONGOING]
         - sellbox should be a pickup truck
-        - cash quota, if met = win, if not lose (back to day 1)
-        - quota should subtract the total cash [total cash - (quota*0.5)]
+        - cash quota, if met = win, if not lose (back to day 1) [DONE]
+        - quota should subtract the total cash [total cash - (quota*0.5)] [DONE]
 
     - office level:
         - play office OST
