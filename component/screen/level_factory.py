@@ -3,7 +3,8 @@ import pygame
 from .states import State
 from ..map.factory_map import FactoryMap
 from ..camera import Camera, Follow
-from ..entity import Player, ResourceEntity
+from ..entity import Player
+from .lose_screen import LoseScreen
 from ..utils import get_world_mousePos, EntityType, Animation, Direction, Fonts
 from component.utils.enums import AudioType, OST, SFX
 from component.utils.audio import AudioComp
@@ -11,7 +12,7 @@ from .economy import Economy
 
 # FACTORY LEVEL CONFIG
 DAY_DURATION = 180.0 # 3 minutes
-CASH_QUOTA = 500
+STARTING_QUOTA = 150.50
 PREP_STAGE_PICKUP_DURATION = 0.5
 PICKUP_DURATIONS = {
     EntityType.CONVEYOR: 2.0,
@@ -26,8 +27,10 @@ PICKUP_DURATIONS = {
 class FactoryLevel(State):
     def __init__(self, game, economy=None):
         super().__init__(game)
-        
+
+        # should carry on to other levels that has economy
         self.economy = economy if economy is not None else Economy(starting_cash=0)
+        self.quota = STARTING_QUOTA # grows over days
 
         self.all_sprites = pygame.sprite.LayeredUpdates()
         self.game = game
@@ -73,7 +76,7 @@ class FactoryLevel(State):
         # stage tracking:
         self.is_prep_stage = True   # level always opens in prep stage
         self.day_timer = 0.0
-        self.day_ended = False
+        self.day_ended = False        
 
         AudioComp.play_ost(self, AudioType.OST, OST.TITLE)
 
@@ -169,11 +172,8 @@ class FactoryLevel(State):
             ty = int(entity.position.y // size)
             covered = [(tx, ty)]
 
-        # release/destroy any items riding this entity (e.g. conveyor) before removing it
-        if hasattr(entity, "items"):
-            for item in entity.items:
-                self.all_sprites.remove(item["resource"])
-            entity.items = []
+        # release/destroy any resources held
+        self._release_held_resources(entity)
 
         for tx, ty in covered:
             if self.map.is_tile_valid(tx, ty):
@@ -188,6 +188,26 @@ class FactoryLevel(State):
         self.pickup_progress = 0.0
         self.pickup_required = 0.0
 
+    # helper method for releasing/removing items
+    def _release_held_resources(self, entity):
+        # conveyors' list of items
+        if hasattr(entity, "items"):
+            for item in entity.items:
+                self.all_sprites.remove(item["resource"])
+            entity.items = []
+
+        # machines/generators' input ports
+        if hasattr(entity, "input_buffer"):
+            for port, resource in entity.input_buffer.items():
+                if resource is not None:
+                    self.all_sprites.remove(resource)
+            entity.input_buffer = {p: None for p in entity.input_buffer}
+
+        # for machines/generators with single output/port
+        if hasattr(entity, "output_buffer") and entity.output_buffer is not None:
+            self.all_sprites.remove(entity.output_buffer)
+            entity.output_buffer = None
+
     @property
     def pickup_fill_ratio(self):
         if self.pickup_target is None or self.pickup_required <= 0:
@@ -198,9 +218,9 @@ class FactoryLevel(State):
     def end_day(self):
         self.day_ended = True
         self.is_prep_stage = True
-        if self.economy.cash >= CASH_QUOTA:
+        if self.economy.cash >= STARTING_QUOTA:
             # TODO: increment quota per win 
-            self.economy.cash -= int(CASH_QUOTA * 0.5)            
+            self.economy.cash -= int(STARTING_QUOTA * 0.5)            
             self.on_day_won()
         else:
             self.on_day_lost()
@@ -210,11 +230,13 @@ class FactoryLevel(State):
         pass
 
     def on_day_lost(self):
-        # TODO: reset to day one, loose everything
-        pass
+        self.day_ended = False
+        self.is_prep_stage = True
+        self.day_timer = 0.0
+        lose_screen = LoseScreen(self.game)
+        lose_screen.enter_state()
 
     def start_stage_transition(self):
-        # call this method when prep stage ends
         self.is_prep_stage = False
 
     # (> w <)?
@@ -238,10 +260,11 @@ class FactoryLevel(State):
         self.draw_player_shadow(display)
         self.draw_interact_highlight(display)
         self.draw_item_count(display)
-        self.draw_cash_display(display)
+        #self.draw_cash_display(display)
         self.draw_pickup_bar(display)
         self.draw_day_timer(display)
-        self.draw_prep_prompt(display)
+        self.draw_prep_text(display)
+        self.draw_quota(display)
 
     @staticmethod
     def _lerp_color(c1, c2, t):
@@ -348,11 +371,15 @@ class FactoryLevel(State):
     def draw_day_timer(self, display):
         # Placeholder for timer
         font = self.game.assets[Fonts.HEADER]
-        remaining = max(0, DAY_DURATION - self.day_timer)
-        text = font.render(f"TIME: {int(remaining)}", True, (255, 255, 255))
-        display.blit(text, (self.game.GAME_WIDTH - 100, 10))
+        remaining = max(0, DAY_DURATION - self.day_timer)        
+        if self.is_prep_stage:
+            text = font.render(f"PREPARATORY", True, (255, 255, 255))
+            display.blit(text, (self.game.GAME_WIDTH - 120, 10))
+        else:
+            text = font.render(f"TIME: {int(remaining)}", True, (255, 255, 255))
+            display.blit(text, (self.game.GAME_WIDTH - 100, 10))
 
-    def draw_prep_prompt(self, display):
+    def draw_prep_text(self, display):
         if not self.is_prep_stage:
             return
         font = self.game.assets[Fonts.BODY]
@@ -363,3 +390,23 @@ class FactoryLevel(State):
         bg.fill((0, 0, 0, 150))
         display.blit(bg, (text_rect.x - 10, text_rect.y - 5))
         display.blit(text, text_rect)
+
+    def draw_quota(self, display):
+        font = self.game.assets[Fonts.HEADER]
+        text_1 = font.render("TODAY'S QUOTA", True, (255, 255, 255))
+        text_2 = font.render(f"${self.economy.cash} / ${self.quota}", True, (100, 255, 100))
+
+        padding = 8
+        line_gap = 2
+        content_width = max(text_1.get_width(), text_2.get_width())
+        content_height = text_1.get_height() + text_2.get_height() + line_gap
+
+        bg = pygame.Surface((content_width + padding * 2, content_height + padding * 2), pygame.SRCALPHA)
+        bg.fill((0, 0, 0, 150))
+        display.blit(bg, (10, 10))
+
+        text_rect_1 = text_1.get_rect(topleft=(10 + padding, 10 + padding))
+        text_rect_2 = text_2.get_rect(topleft=(10 + padding, text_rect_1.bottom + line_gap))
+
+        display.blit(text_1, text_rect_1)
+        display.blit(text_2, text_rect_2)
