@@ -35,6 +35,7 @@ class Game:
             "interact":False,
             "space":False,
             "Lshift":False,
+            "Lctrl":False,
             "LMB":False,
             "RMB":False,
 
@@ -45,6 +46,7 @@ class Game:
 
             "key_f":False, #Item spawn test key WOOD
             "key_g":False, #Item spawn test key STONE
+            "key_d":False,
 
             "key_1":False,
             "key_2":False,
@@ -135,6 +137,10 @@ class Game:
                     self.action_keys["key_0"] = True
                 if event.key == pygame.K_RETURN:
                     self.action_keys["key_enter"] = True
+                if event.key == pygame.K_LCTRL:
+                    self.action_keys["Lctrl"] = True
+                if event.key == pygame.K_d:
+                    self.action_keys["key_d"] = True
                 
                 # item spawn test - not needed
                 if event.key == pygame.K_f:
@@ -180,6 +186,10 @@ class Game:
                     self.action_keys["interact"] = False
                 if event.key == pygame.K_LSHIFT:
                     self.action_keys["Lshift"] = False
+                if event.key == pygame.K_LCTRL:
+                    self.action_keys["Lctrl"] = False
+                if event.key == pygame.K_d:
+                    self.action_keys["key_d"] = False
 
     # delta time calculation
     def get_delta_time(self):
@@ -397,7 +407,9 @@ class Game:
 
         # factory sprite
         self.assets[WorldType.FACTORY] = {
-            Layers.FLOOR_0 : self.load_frame(os.path.join(self.sprite_dir, "factory_sprite.png")),
+            Layers.FLOOR_0 : self.load_frames(
+                os.path.join(self.sprite_dir, "factory_sprite.png"),
+                0, 0, 992, 672, 3),
             Layers.FRONT_1 : self.load_frame(os.path.join(self.sprite_dir, "factory_sprite_foreground.png")),
         }
 
