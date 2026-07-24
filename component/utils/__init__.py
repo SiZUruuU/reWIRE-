@@ -1,5 +1,5 @@
 from .coordinates import get_world_mousePos, check_tile_at
-from .enums import EntityType, Animation, Direction, Fonts, Layers, ResourceType
+from .enums import EntityType, Animation, Direction, Fonts, Layers, ResourceType, WorldType
 from .pickup_manager import PickupManager
 
 __all__ = [
@@ -12,4 +12,5 @@ __all__ = [
     "Layers", 
     "ResourceType",
     "PickupManager",
+    "WorldType",
     ]
