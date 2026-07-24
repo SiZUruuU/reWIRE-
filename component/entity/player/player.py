@@ -37,8 +37,21 @@ class PlayerEntity(BaseEntity):
         self.handle_input(actions)
 
         # update position:
-        self.position.x += self.velocity.x * delta_time
-        self.position.y += self.velocity.y * delta_time
+        # added world collision
+        new_x = self.position.x + self.velocity.x * delta_time
+        new_y = self.position.y + self.velocity.y * delta_time
+
+        half_w = self.width / 2
+        half_h = self.height / 2
+
+        new_x = max(self.world.bounds_left + half_w, min(new_x, self.world.bounds_right - half_w))
+        new_y = max(self.world.bounds_top + half_h, min(new_y, self.world.bounds_bottom - half_h))
+
+        self.position.x = new_x
+        self.position.y = new_y
+
+        self.position.x = new_x
+        self.position.y = new_y
 
         self.update_state()
 
