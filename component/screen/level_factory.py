@@ -28,6 +28,27 @@ class FactoryLevel(State):
     def __init__(self, game, economy=None):
         super().__init__(game)
 
+        # FACTORY WORLD CONFIG
+        PADDING_TILES = 6
+        TILE_SIZE = game.TILE_SIZE
+        GRID_COLS, GRID_ROWS = 19, 9
+        TILE_SIZE = game.TILE_SIZE
+        # wall thickness per side, in tiles
+        NORTH_WALL_TILES = 1.8
+        SOUTH_WALL_TILES = 3.2
+        EAST_WALL_TILES = 2.9
+        WEST_WALL_TILES = 1.8
+
+        # basically the bounds of this world, automatically calculated
+        # use the values above
+        self.WIDTH = (GRID_COLS + PADDING_TILES * 2) * TILE_SIZE
+        self.HEIGHT = (GRID_ROWS + PADDING_TILES * 2) * TILE_SIZE
+
+        self.bounds_left = WEST_WALL_TILES * TILE_SIZE
+        self.bounds_top = NORTH_WALL_TILES * TILE_SIZE
+        self.bounds_right = self.WIDTH - EAST_WALL_TILES * TILE_SIZE
+        self.bounds_bottom = self.HEIGHT - SOUTH_WALL_TILES * TILE_SIZE
+
         # should carry on to other levels that has economy
         self.economy = economy if economy is not None else Economy(starting_cash=0)
         self.quota = STARTING_QUOTA # grows over days
@@ -36,7 +57,7 @@ class FactoryLevel(State):
         self.game = game
         self.map = FactoryMap(self)        
 
-        self.player = Player(pygame.Vector2(game.GAME_WIDTH/2, game.GAME_HEIGHT/2), self, EntityType.PLAYER)
+        self.player = Player(pygame.Vector2(self.WIDTH/2, self.HEIGHT/2), self, EntityType.PLAYER)
         self.camera = Camera(self.player, game.GAME_WIDTH, game.GAME_HEIGHT)
         self.camera.setmethod(Follow(self.camera, self.player))
 
@@ -76,7 +97,9 @@ class FactoryLevel(State):
         # stage tracking:
         self.is_prep_stage = True   # level always opens in prep stage
         self.day_timer = 0.0
-        self.day_ended = False        
+        self.day_ended = False
+
+        self.night_overlay = pygame.Surface((self.WIDTH, self.HEIGHT), pygame.SRCALPHA)        
 
         AudioComp.play_ost(self, AudioType.OST, OST.TITLE)
 
@@ -84,7 +107,7 @@ class FactoryLevel(State):
     ## LOGIC METHODS ##
     def update(self, delta_time, actions):
         if not self.day_ended and not self.is_prep_stage:
-            self.day_timer += delta_time
+            self.day_timer += delta_time*10
             if self.day_timer >= DAY_DURATION:
                 self.end_day()
 
@@ -246,13 +269,24 @@ class FactoryLevel(State):
         # 0.0 = full day, 1.0 = full night
         night_factor = 0.0
         base_color = self._lerp_color((50, 60, 90), (10, 12, 25), night_factor)
-        display.fill(base_color)
+        display.fill((0, 0, 0))
 
+        world_screen_x = -self.camera.offset.x
+        world_screen_y = -self.camera.offset.y
+        world_rect = pygame.Rect(world_screen_x, world_screen_y, self.WIDTH, self.HEIGHT)
+        pygame.draw.rect(display, base_color, world_rect)
+
+        # draws map background
         self.map.draw(display, self.camera)
 
         for sprite in self.all_sprites:
             camera = sprite.rect.topleft - self.camera.offset
             display.blit(sprite.image, camera)
+
+        # draws map foreground
+        self.map.draw_foreground(display, self.camera)
+
+        self.draw_night_overlay(display)
 
         if self.selected_entity != EntityType.NONE:
             self.draw_placement_preview(display)
@@ -410,3 +444,14 @@ class FactoryLevel(State):
 
         display.blit(text_1, text_rect_1)
         display.blit(text_2, text_rect_2)
+
+    def draw_night_overlay(self, display):
+        progress = min(self.day_timer / DAY_DURATION, 1.0)
+        max_alpha = 120
+        alpha = int(max_alpha * progress)
+        if alpha <= 0:
+            return
+        self.night_overlay.fill((20, 1, 26, alpha))
+        screen_x = -self.camera.offset.x
+        screen_y = -self.camera.offset.y
+        display.blit(self.night_overlay, (screen_x, screen_y))        
