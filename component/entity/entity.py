@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from ..utils import EntityType
+import random
 import pygame
 
 # ABSTRACT CLASS FOR ENTITIES
@@ -119,3 +120,30 @@ class BaseEntity(ABC, pygame.sprite.Sprite):
         dir_int = (int(direction.x), int(direction.y))
         angle = angle_by_direction.get(dir_int, 0)
         return pygame.transform.rotate(base_frame, angle)
+    
+    def rect_from_covered_tiles(self, covered_tiles):
+        size = self.world.game.TILE_SIZE
+        min_tx = min(tx for tx, ty in covered_tiles)
+        min_ty = min(ty for tx, ty in covered_tiles)
+        max_tx = max(tx for tx, ty in covered_tiles) + 1
+        max_ty = max(ty for tx, ty in covered_tiles) + 1
+
+        min_x, min_y = self.world.map.tile_to_world(min_tx, min_ty)
+        width = (max_tx - min_tx) * size
+        height = (max_ty - min_ty) * size
+        return pygame.Rect(min_x, min_y, width, height)
+
+    ## VISUAL EFFECTS STUFF:
+    def apply_shake(self, base_pos, elapsed_seconds, duration_seconds, max_intensity):
+        # shake duration finished — snap back to rest position
+        if duration_seconds <= 0 or elapsed_seconds >= duration_seconds:
+            self.rect.topleft = (int(base_pos.x), int(base_pos.y))
+            return
+
+        progress = elapsed_seconds / duration_seconds
+        current_intensity = pygame.math.lerp(max_intensity, 0.0, progress)
+
+        offset_x = random.uniform(-current_intensity, current_intensity)
+        offset_y = random.uniform(-current_intensity, current_intensity)
+        self.rect.x = int(base_pos.x + offset_x)
+        self.rect.y = int(base_pos.y + offset_y)    
