@@ -229,7 +229,15 @@ class BaseMap(ABC):
             else:
                 tile.set_layout(Animation.STRAIGHT, Direction(tile_dir))
                 tile.apply_direction(tile.direction)
+    
+    def absolute_tile_to_world(self, tile_x, tile_y):
+        size = self.tile_size
+        return (tile_x * size, tile_y * size)
 
+    def world_to_absolute_tile(self, world_x, world_y):
+        size = self.tile_size
+        return int(world_x // size), int(world_y // size)
+    
     @abstractmethod
     def draw(self, display, camera):
         pass
