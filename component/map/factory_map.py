@@ -13,7 +13,7 @@ class FactoryMap(BaseMap):
         self.grid_width = self.cols * self.tile_size
         self.grid_height = self.rows * self.tile_size
 
-        self.background = world.game.assets[WorldType.FACTORY][Layers.FLOOR_0]
+        self.day_frames = self.world.game.assets[WorldType.FACTORY][Layers.FLOOR_0]
         self.background_pos = (0, 0)
 
         self.foreground = world.game.assets[WorldType.FACTORY][Layers.FRONT_1]
@@ -36,14 +36,34 @@ class FactoryMap(BaseMap):
                 draw.rect(self.surface, color, (local_x, local_y, self.tile_size, self.tile_size))
 
     def draw(self, display, camera):
-        bg_x = self.background_pos[0] - camera.offset.x
-        bg_y = self.background_pos[1] - camera.offset.y
-        display.blit(self.background, (bg_x, bg_y))
+        progress = self.world.day_timer / self.world.day_duration
+        self.draw_day_frames(display, camera, progress)
 
         screen_x = self.origin_x - camera.offset.x
         screen_y = self.origin_y - camera.offset.y
         if self.surface:
             display.blit(self.surface, (screen_x, screen_y))
+
+    def draw_day_frames(self, display, camera, progress):
+        progress = max(0.0, min(progress, 1.0))
+
+        if progress <= 0.5:
+            base_frame = self.day_frames[0]
+            overlay_frame = self.day_frames[1]
+            local_t = progress / 0.5
+        else:
+            base_frame = self.day_frames[1]
+            overlay_frame = self.day_frames[2]
+            local_t = (progress - 0.5) / 0.5
+
+        base_frame.set_alpha(255)
+        overlay_frame.set_alpha(int(255 * local_t))
+
+        screen_x = self.background_pos[0] - camera.offset.x
+        screen_y = self.background_pos[1] - camera.offset.y
+
+        display.blit(base_frame, (screen_x, screen_y))
+        display.blit(overlay_frame, (screen_x, screen_y))
 
     def draw_foreground(self, display, camera):
         fg_x = self.foreground_pos[0] - camera.offset.x
