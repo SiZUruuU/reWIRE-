@@ -4,7 +4,7 @@ from .states import State
 from ..map.factory_map import FactoryMap
 from ..camera import Camera, Follow
 from ..entity import Player, ResourceEntity
-from ..utils import get_world_mousePos, EntityType, Animation, Direction, ResourceType, check_tile_at, Fonts
+from ..utils import get_world_mousePos, EntityType, Animation, Direction, Fonts
 from component.utils.enums import AudioType, OST, SFX
 from component.utils.audio import AudioComp
 from .economy import Economy
@@ -31,7 +31,7 @@ class FactoryLevel(State):
 
         self.all_sprites = pygame.sprite.LayeredUpdates()
         self.game = game
-        self.map = FactoryMap(self)
+        self.map = FactoryMap(self)        
 
         self.player = Player(pygame.Vector2(game.GAME_WIDTH/2, game.GAME_HEIGHT/2), self, EntityType.PLAYER)
         self.camera = Camera(self.player, game.GAME_WIDTH, game.GAME_HEIGHT)
@@ -43,6 +43,15 @@ class FactoryLevel(State):
             pygame.Vector2(1, 0),
             pygame.Vector2(0, 1)
         ]
+
+        # add sellbox to world
+        for y in range (3,6):
+            self.map.place_entity(
+                pygame.Vector2(0,y),
+                self.directions[0], 
+                EntityType.SELLBOX
+            )
+        
         self.dir_index = 0
         self.direction = self.directions[0]
 
@@ -71,7 +80,7 @@ class FactoryLevel(State):
 
     ## LOGIC METHODS ##
     def update(self, delta_time, actions):
-        if not self.day_ended:
+        if not self.day_ended and not self.is_prep_stage:
             self.day_timer += delta_time
             if self.day_timer >= DAY_DURATION:
                 self.end_day()
@@ -82,7 +91,9 @@ class FactoryLevel(State):
 
     def handle_inputs(self, actions):
         mouse = get_world_mousePos(self.game, self.camera)
+        tile_x, tile_y = self.map.world_to_tile(mouse['world_x'], mouse['world_y'])
 
+        # for cycling through inventory
         for k in range(len(self.hotbar)):
             key_string = f"key_{k+1}"
             if actions[key_string]:
@@ -90,10 +101,12 @@ class FactoryLevel(State):
                 AudioComp.play_sfx(self, AudioType.SFX, SFX.HOTBAR_SELECT)
                 self.game.reset_key(key_string)
 
+        # clear held machine
         if actions["key_q"]:
             self.selected_entity = EntityType.NONE
             self.game.reset_key("key_q")
 
+        # rotating machines
         if actions["key_r"]:
             if actions["Lshift"]:
                 self.dir_index -= 1
@@ -103,22 +116,28 @@ class FactoryLevel(State):
             self.direction = self.directions[self.dir_index]
             self.game.reset_key("key_r")
 
+        # placing down machines
         if actions["LMB"] and self.selected_entity != EntityType.NONE:
-            x, y = mouse['tile_x'], mouse['tile_y']
-            location = pygame.Vector2(x, y)
+            location = pygame.Vector2(tile_x, tile_y)
             self.map.place_entity(location, self.direction, self.selected_entity)
-            AudioComp.play_sfx(self, AudioType.SFX, SFX.HOVER)  # swap for SFX.PLACE_MACHINE once added
+            AudioComp.play_sfx(self, AudioType.SFX, SFX.HOVER)
             self.game.reset_key("LMB")
 
-        self.handle_pickup(actions, mouse)
+        # for the machine removal feature
+        self.handle_pickup(actions, tile_x, tile_y)
 
+        # for picking up items
         if actions["space"]:
             self.player.try_interact(self.map, self.game, self.camera)
             self.game.reset_key("space")
 
+        # end prep stage, starts the day proper
+        if actions["key_enter"] and self.is_prep_stage:
+            self.start_stage_transition()
+            self.game.reset_key("key_enter")
+
     ## PICKUP LOGIC 
-    def handle_pickup(self, actions, mouse):
-        tile_x, tile_y = mouse['tile_x'], mouse['tile_y']
+    def handle_pickup(self, actions, tile_x, tile_y):
         entity = self.map.grid[tile_x][tile_y] if self.map.is_tile_valid(tile_x, tile_y) else None
         rmb_held = actions["RMB"]
 
@@ -149,6 +168,12 @@ class FactoryLevel(State):
             tx = int(entity.position.x // size)
             ty = int(entity.position.y // size)
             covered = [(tx, ty)]
+
+        # release/destroy any items riding this entity (e.g. conveyor) before removing it
+        if hasattr(entity, "items"):
+            for item in entity.items:
+                self.all_sprites.remove(item["resource"])
+            entity.items = []
 
         for tx, ty in covered:
             if self.map.is_tile_valid(tx, ty):
@@ -216,6 +241,7 @@ class FactoryLevel(State):
         self.draw_cash_display(display)
         self.draw_pickup_bar(display)
         self.draw_day_timer(display)
+        self.draw_prep_prompt(display)
 
     @staticmethod
     def _lerp_color(c1, c2, t):
@@ -224,8 +250,7 @@ class FactoryLevel(State):
     ## DRAW METHODS
     def draw_placement_preview(self, display):
         mouse = get_world_mousePos(self.game, self.camera)
-        tile_x, tile_y = mouse['tile_x'], mouse['tile_y']
-
+        tile_x, tile_y = self.map.world_to_tile(mouse['world_x'], mouse['world_y'])
         sprite = self.get_preview_sprite(self.selected_entity, self.direction)
         if sprite is None:
             return
@@ -239,8 +264,9 @@ class FactoryLevel(State):
         preview.blit(s_tint, (0, 0), special_flags=pygame.BLEND_RGB_MULT)
         preview.set_alpha(140)
 
-        screen_x = mouse['world_x'] - self.camera.offset.x
-        screen_y = mouse['world_y'] - self.camera.offset.y
+        world_x, world_y = self.map.tile_to_world(tile_x, tile_y)
+        screen_x = world_x - self.camera.offset.x
+        screen_y = world_y - self.camera.offset.y
         display.blit(preview, (screen_x, screen_y))
     
     def draw_player_shadow(self, display):
@@ -253,18 +279,20 @@ class FactoryLevel(State):
         tile_x, tile_y = self.player.get_interact_tile(self.map, self.game, self.camera)
         if tile_x is None:
             return
-        tile_size = self.game.TILE_SIZE
         has_item = self.map.get_ground_item(tile_x, tile_y) is not None
         tile = self.map.grid[tile_x][tile_y] if self.map.is_tile_valid(tile_x, tile_y) else None
         has_output = hasattr(tile, "output_buffer") and tile.output_buffer is not None
         color = (255, 255, 0, 90) if (has_item or has_output) else (255, 255, 255, 40)
 
-        screen_x = tile_x * tile_size - self.camera.offset.x
-        screen_y = tile_y * tile_size - self.camera.offset.y
-        highlight = pygame.Surface((tile_size, tile_size), pygame.SRCALPHA)
+        world_x, world_y = self.map.tile_to_world(tile_x, tile_y)
+        screen_x = world_x - self.camera.offset.x
+        screen_y = world_y - self.camera.offset.y
+
+        highlight = pygame.Surface((self.map.tile_size, self.map.tile_size), pygame.SRCALPHA)
         highlight.fill(color)
         display.blit(highlight, (screen_x, screen_y))
 
+    # helper method for draw_placement_preview
     def get_preview_sprite(self, entity_type, direction):
         assets = self.game.assets.get(entity_type)
         if not assets:
@@ -279,15 +307,17 @@ class FactoryLevel(State):
         return frames[0]
 
     def draw_item_count(self, display):
-        size = self.game.TILE_SIZE
         font = self.game.assets[Fonts.BODY]
         for (tile_x, tile_y), items in self.map.ground_items.items():
             if len(items) <= 1:
                 continue
-            screen_x = tile_x * size - self.camera.offset.x
-            screen_y = tile_y * size - self.camera.offset.y
+            world_x, world_y = self.map.tile_to_world(tile_x, tile_y)
+            screen_x = world_x - self.camera.offset.x
+            screen_y = world_y - self.camera.offset.y
+
             text = font.render(str(len(items)), True, (255, 255, 255))
-            text_rect = text.get_rect(bottomright=(screen_x + size - 2, screen_y + size - 2))
+            text_rect = text.get_rect(bottomright=(screen_x + self.map.tile_size - 2, screen_y + self.map.tile_size - 2))
+
             bg = pygame.Surface((text_rect.width + 4, text_rect.height + 2), pygame.SRCALPHA)
             bg.fill((0, 0, 0, 150))
             display.blit(bg, (text_rect.x - 2, text_rect.y - 1))
@@ -321,3 +351,15 @@ class FactoryLevel(State):
         remaining = max(0, DAY_DURATION - self.day_timer)
         text = font.render(f"TIME: {int(remaining)}", True, (255, 255, 255))
         display.blit(text, (self.game.GAME_WIDTH - 100, 10))
+
+    def draw_prep_prompt(self, display):
+        if not self.is_prep_stage:
+            return
+        font = self.game.assets[Fonts.BODY]
+        text = font.render("PREP STAGE - Press 'ENTER' to start day", True, (255, 230, 120))
+        text_rect = text.get_rect(midbottom=(self.game.GAME_WIDTH // 2, self.game.GAME_HEIGHT - 30))
+
+        bg = pygame.Surface((text_rect.width + 20, text_rect.height + 10), pygame.SRCALPHA)
+        bg.fill((0, 0, 0, 150))
+        display.blit(bg, (text_rect.x - 10, text_rect.y - 5))
+        display.blit(text, text_rect)

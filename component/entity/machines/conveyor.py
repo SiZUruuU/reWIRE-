@@ -42,12 +42,10 @@ class Conveyor(MachineEntity):
     def try_pass(self):
         head = self.items[0]
         offset_point = self.exit + self.direction * 1
-        size = self.world.game.TILE_SIZE
-        tile_x = int(offset_point.x // size)
-        tile_y = int(offset_point.y // size)
+        tile_x, tile_y = self.world.map.world_to_tile(offset_point.x, offset_point.y)
         next = check_tile_at(
             offset_point.x, offset_point.y,
-            self.world.game, self.world.map.grid
+            self.world.game, self.world.map
         )
         if next is None:
             return

@@ -120,3 +120,10 @@ class Furnace(MachineEntity):
         total = len(frames)
         frame_index = int(global_time * self.animation_speed) % total
         self.image = frames[frame_index]
+
+        if self.is_processing and self.active_recipe is not None:
+            duration = self.active_recipe["duration"]
+            elapsed = duration - self.process_time
+            self.apply_shake(self.position, elapsed, duration, max_intensity=1.0)
+        else:
+            self.rect.topleft = (int(self.position.x), int(self.position.y))

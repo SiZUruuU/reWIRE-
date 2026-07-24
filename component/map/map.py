@@ -5,7 +5,7 @@ from ..entity import *
 from ..entity.machines.machine import MachineEntity
 from ..entity.generators.generator import get_generator_class
 from ..entity.generators.stone_generator import StoneGenerator
-from pygame import Vector2
+from pygame import Vector2, Rect
 
 # Dict for corner coords to animation sprite:
 CORNER_MAP = {
@@ -86,7 +86,7 @@ class BaseMap(ABC):
                 return False        
 
         entity = entity_class(
-            grid * self.world.game.TILE_SIZE,
+            Vector2(self.tile_to_world(x, y)),
             direction,
             self.world,
             entity_type
@@ -136,7 +136,7 @@ class BaseMap(ABC):
         min_x = min(t[0] for t in transformed)
         min_y = min(t[1] for t in transformed)
 
-        return [(x + tx - min_x, y + ty - min_y) for tx, ty in transformed]
+        return [(x + tx - min_x, y + ty - min_y) for tx, ty in transformed] 
 
     def resolve_ground_item(self, x, y, entity):
         items = list(self.get_ground_item(x, y))

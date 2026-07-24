@@ -72,18 +72,19 @@ class PlayerEntity(BaseEntity):
         tile = map.grid[tile_x][tile_y] if map.is_tile_valid(tile_x, tile_y) else None
 
         if tile is not None and tile.accept(self.held_item, tile_x, tile_y):
-            self.world.all_sprites.change_layer(self.held_item, Layers.FLOOR_1.value)
+            if self.held_item.alive():
+                self.world.all_sprites.change_layer(self.held_item, Layers.FLOOR_1.value)
             self.held_item = None
             return
 
         if tile is None:
             # only drop item if the item on the ground is None or same item
             if map.map_ground_item(tile_x, tile_y, self.held_item):
-                snapped = pygame.Vector2(tile_x, tile_y) * game.TILE_SIZE + pygame.Vector2(game.TILE_SIZE/2, game.TILE_SIZE/2)
+                world_x, world_y = map.tile_to_world(tile_x, tile_y)
+                snapped = pygame.Vector2(world_x, world_y) + pygame.Vector2(game.TILE_SIZE/2, game.TILE_SIZE/2)
                 self.held_item.position = snapped
                 self.held_item.rect.center = (round(snapped.x), round(snapped.y))
                 self.world.all_sprites.change_layer(self.held_item, Layers.FLOOR_1.value)
-
                 self.held_item = None
     
     def try_pickup(self, map, game, camera):
@@ -117,11 +118,9 @@ class PlayerEntity(BaseEntity):
 
     def get_interact_tile(self, map, game, camera):
         mouse = get_world_mousePos(game, camera)
-        tile_x, tile_y = mouse['tile_x'], mouse['tile_y']
+        tile_x, tile_y = map.world_to_tile(mouse['world_x'], mouse['world_y'])
 
-        tile_size = game.TILE_SIZE
-        player_tile_x = int(self.rect.centerx // tile_size)
-        player_tile_y = int(self.rect.centery // tile_size)
+        player_tile_x, player_tile_y = map.world_to_tile(self.rect.centerx, self.rect.centery)
 
         # Chebyshev distance: allows straight and diagonal adjacency, both count as "1 tile away"
         if max(abs(tile_x - player_tile_x), abs(tile_y - player_tile_y)) > 1:

@@ -40,17 +40,15 @@ class Generator(BaseEntity):
                 self.timer = 0.0
                 self.generate()
         self.try_release()
-        self.animate(global_time)
+        self.animate(global_time)     
 
     def generate(self):
         output_position = self.output_position
-        infront = check_tile_at(output_position.x, output_position.y, self.world.game, self.world.map.grid)
+        infront = check_tile_at(output_position.x, output_position.y, self.world.game, self.world.map)
         if infront is None:
             return
 
-        size = self.world.game.TILE_SIZE
-        tile_x = int(output_position.x // size)
-        tile_y = int(output_position.y // size)
+        tile_x, tile_y = self.world.map.world_to_tile(output_position.x, output_position.y)
 
         if hasattr(infront, "get_port"):
             port = infront.get_port(tile_x, tile_y, self.direction)
@@ -66,15 +64,20 @@ class Generator(BaseEntity):
         if self.output_buffer is None:
             return
         output_position = self.output_position
-        infront = check_tile_at(output_position.x, output_position.y, self.world.game, self.world.map.grid)
+        infront = check_tile_at(output_position.x, output_position.y, self.world.game, self.world.map)
         if infront is None:
             return
-        tile_x = int(output_position.x // self.world.game.TILE_SIZE)
-        tile_y = int(output_position.y // self.world.game.TILE_SIZE)
+        tile_x, tile_y = self.world.map.world_to_tile(output_position.x, output_position.y)
         if infront.accept(self.output_buffer, tile_x, tile_y, self.direction):
             self.output_buffer = None
 
     def animate(self, global_time):
+        if self.output_buffer is None:
+            elapsed = self.timer
+            self.apply_shake(self.position, elapsed, self.cooldown, max_intensity=0.5)
+        else:
+            self.rect.topleft = (int(self.position.x), int(self.position.y))
+
         self.image = self.get_frame_animation(None, global_time)
 
     def apply_direction(self, direction):

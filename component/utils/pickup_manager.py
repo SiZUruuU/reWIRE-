@@ -49,18 +49,34 @@ class PickupManager:
         if self.progress >= self.required:
             self.complete_pickup()
 
-    def complete_pickup(self):
-        entity = self.target
-        covered = getattr(entity, "covered_tiles", [(int(entity.position.x // self.world.game.TILE_SIZE),
-                                                       int(entity.position.y // self.world.game.TILE_SIZE))])
+    def complete_pickup(self, entity):
+        print("done")
+        covered = getattr(entity, "covered_tiles", None)
+        if covered is None:
+            size = self.game.TILE_SIZE
+            tx = int(entity.position.x // size)
+            ty = int(entity.position.y // size)
+            covered = [(tx, ty)]
+        # item handling when picking up machines
+        if hasattr(entity, "items"):
+            for item in entity.items:
+                self.all_sprites.remove(item["resource"])
+                print("resource removed")
+            entity.items = []
+        print(f"conveyor items at pickup: {entity.items}")
         for tx, ty in covered:
-            if self.world.map.is_tile_valid(tx, ty):
-                self.world.map.grid[tx][ty] = None
-        self.world.all_sprites.remove(entity)
-        # TODO: return resources to player inventory here, once that system exists
-        self.target = None
-        self.progress = 0.0
-        self.required = 0.0
+            if self.map.is_tile_valid(tx, ty):
+                self.map.grid[tx][ty] = None
+
+        self.all_sprites.remove(entity)
+
+        for tx, ty in covered:
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                self.map.belt_neighbor_recalculation(tx + dx, ty + dy)
+
+        self.pickup_target = None
+        self.pickup_progress = 0.0
+        self.pickup_required = 0.0
 
     @property
     def fill_ratio(self):

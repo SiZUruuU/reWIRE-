@@ -24,7 +24,8 @@ class SellBox(MachineEntity):
 
         # if there's a resource, get it's value and turn it to cash
         value = RESOURCE_DATA.get(resource.resource_type, {}).get("value", 0)
-        self.world.cash += value
+        rounded_value = round(self.world.economy.cash + value, 5)
+        self.world.economy.cash = rounded_value
 
         # as any machine entities, we must detach it from where it came
         resource.take_resource(self)

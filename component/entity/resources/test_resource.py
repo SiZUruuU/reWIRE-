@@ -1,6 +1,6 @@
 import pygame
 
-from ...utils import check_tile_at, EntityType
+from ...utils import EntityType
 from .resource import ResourceEntity
 
 class TestResource(ResourceEntity):

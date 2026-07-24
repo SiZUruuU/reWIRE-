@@ -52,7 +52,18 @@ class MachineEntity(BaseEntity):
         self.try_release()
         self.animate(global_time)
 
+#    def animate(self, global_time):
+#        self.image = self.get_frame_animation(None, global_time)
+
     def animate(self, global_time):
+        if self.is_processing and self.active_recipe is not None:
+            duration = self.active_recipe["duration"]
+            elapsed = duration - self.process_time
+            base_pos = self.position
+            self.apply_shake(base_pos, elapsed, duration, max_intensity=0.1)
+        else:
+            self.rect.topleft = (int(self.position.x), int(self.position.y))
+
         self.image = self.get_frame_animation(None, global_time)
 
     def can_accept(self, resource, port="material"):
@@ -128,12 +139,10 @@ class MachineEntity(BaseEntity):
         if self.output_buffer is None:
             return
         output_position = self.get_output_position()
-        size = self.world.game.TILE_SIZE
-        tile_x = int(output_position.x // size)
-        tile_y = int(output_position.y // size)
+        tile_x, tile_y = self.world.map.world_to_tile(output_position.x, output_position.y)
         infront = check_tile_at(
             output_position.x, output_position.y,
-            self.world.game, self.world.map.grid
+            self.world.game, self.world.map
         )
         if infront is None:
             return
@@ -146,10 +155,8 @@ class MachineEntity(BaseEntity):
         if tile_x is None or tile_y is None:
             return next(iter(self.port_map.values()))["port"]
 
-        size = self.world.game.TILE_SIZE
-        origin_x = int(self.position.x // size)
-        origin_y = int(self.position.y // size)
-        raw_offset = (tile_x - origin_x, tile_y - origin_y)
+        self_tile_x, self_tile_y = self.world.map.world_to_tile(self.position.x, self.position.y)
+        raw_offset = (tile_x - self_tile_x, tile_y - self_tile_y)
 
         for local_offset, port_data in self.port_map.items():
             if self.rotate_footprint_offset(local_offset) != raw_offset:

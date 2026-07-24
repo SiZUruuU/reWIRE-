@@ -1,4 +1,4 @@
-from ...utils import EntityType, Animation, Direction, check_tile_at, ResourceType
+from ...utils import EntityType, Animation, Direction, ResourceType
 from .generator import Generator
 from pygame import Vector2
 
@@ -25,26 +25,18 @@ class StoneGenerator(Generator):
     def get_port(self, tile_x, tile_y, from_direction=None):        
         if tile_x is None or tile_y is None:
             return next(iter(self.port_map.values()))["port"]
-        size = self.world.game.TILE_SIZE
-        origin_x = int(self.position.x // size)
-        origin_y = int(self.position.y // size)
-        raw_offset = (tile_x - origin_x, tile_y - origin_y)
 
-        print(f"[{self.generator_type}] dir={(int(self.direction.x), int(self.direction.y))} raw_offset={raw_offset}")
+        self_tile_x, self_tile_y = self.world.map.world_to_tile(self.position.x, self.position.y)
+        raw_offset = (tile_x - self_tile_x, tile_y - self_tile_y)
 
         for local_offset, port_data in self.port_map.items():
             rotated_local = self.rotate_footprint_offset(local_offset)
             expected_dir = self.rotate_offset(port_data["input_direction"])
-            print(f"  checking port={port_data['port']} local={local_offset} rotated_local={rotated_local} expected_dir={expected_dir} got_from_direction={tuple(from_direction) if from_direction else None}")
-
             if rotated_local != raw_offset:
                 continue
             if from_direction is not None and tuple(from_direction) != expected_dir:
                 continue
-            print(f"  -> MATCHED port={port_data['port']}")
             return port_data["port"]
-
-        print("  -> NO MATCH, returning None")
         return None
 
     def can_accept(self, resource, port):
@@ -77,7 +69,7 @@ class StoneGenerator(Generator):
 
     def generate(self):
         had_output_before = self.output_buffer
-        super().generate()  # reuses infront/fullness checks + ResourceEntity creation
+        super().generate()
         if had_output_before is None and self.output_buffer is not None:
             self.consume_fuel()
 
@@ -93,8 +85,8 @@ class StoneGenerator(Generator):
         self.direction = direction
         self.output_position = self.get_output_position()
         dir_key = Direction((int(direction.x), int(direction.y)))
-        self.rotated_inactive = self.world.game.assets[self.generator_type][Animation.STRAIGHT][dir_key]
-        self.rotated_active = self.world.game.assets[self.generator_type][Animation.ACTIVE][dir_key]
+        self.rotated_inactive = self.world.game.assets[self.entity_type][Animation.STRAIGHT][dir_key]
+        self.rotated_active = self.world.game.assets[self.entity_type][Animation.ACTIVE][dir_key]
         self.image = self.rotated_inactive[0]
 
     def animate(self, global_time):
@@ -102,3 +94,8 @@ class StoneGenerator(Generator):
         total = len(frames)
         frame_index = int(global_time * self.animation_speed) % total
         self.image = frames[frame_index]
+
+        if self.output_buffer is None and self.input_buffer.get("fuel") is not None:
+            self.apply_shake(self.position, self.timer, self.cooldown, max_intensity=1.0)
+        else:
+            self.rect.topleft = (int(self.position.x), int(self.position.y))

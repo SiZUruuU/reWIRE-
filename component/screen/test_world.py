@@ -135,7 +135,7 @@ class TestWorld(State):
             position = pygame.Vector2(mouse['world_x'], mouse['world_y'])
             resource = ResourceEntity(position, self, ResourceType.WOOD)
             
-            tile = check_tile_at(position.x, position.y, self.game, self.map.grid)
+            tile = check_tile_at(position.x, position.y, self.game, self.map)
             if tile is not None and tile.accept(resource):
                 pass
             else:
@@ -150,7 +150,7 @@ class TestWorld(State):
             position = pygame.Vector2(mouse['world_x'], mouse['world_y'])
             resource = ResourceEntity(position, self, ResourceType.STONE)
             
-            tile = check_tile_at(position.x, position.y, self.game, self.map.grid)
+            tile = check_tile_at(position.x, position.y, self.game, self.map)
             if tile is not None and tile.accept(resource):
                 pass
             else:
