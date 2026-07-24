@@ -42,7 +42,10 @@ class EntityType(Enum):
     @property
     def layer(self):
         return self._layer
-    
+
+class WorldType(Enum):
+    FACTORY = "factory"
+
 class ResourceType(Enum):
     WOOD = "wood"
     BOARDS = "boards"
