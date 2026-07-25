@@ -46,7 +46,7 @@ class Game:
 
             "key_f":False, #Item spawn test key WOOD
             "key_g":False, #Item spawn test key STONE
-            "key_d":False,
+            "key_d":False, # for debugs
 
             "key_1":False,
             "key_2":False,
@@ -352,8 +352,8 @@ class Game:
         }
 
         # sellbox
-        sellbox = pygame.Surface((self.TILE_SIZE, self.TILE_SIZE))
-        sellbox.fill((50, 200, 50))
+        sellbox = pygame.Surface((self.TILE_SIZE, self.TILE_SIZE), pygame.SRCALPHA)
+        sellbox.fill((0, 200, 50, 50))
         sellbox_frame = [sellbox]
 
         self.assets[EntityType.SELLBOX] = {
@@ -370,7 +370,6 @@ class Game:
             os.path.join(self.sprite_dir, "wood_generator_spritesheet.png"),
             0, 0, 64, 34, 3
         )
-
         self.assets[EntityType.WOOD_GENERATOR] = {
             Animation.STRAIGHT: {
                 Direction.NORTH: [pygame.transform.rotate(f, -90) for f in wood_gen],
@@ -389,7 +388,6 @@ class Game:
             os.path.join(self.sprite_dir, "stone_generator_spritesheet.png"),
             64*3, 0, 64, 64, 3
         )
-
         self.assets[EntityType.STONE_GENERATOR] = {
             Animation.STRAIGHT: {
                 Direction.NORTH: [pygame.transform.rotate(f, -90) for f in stone_gen],
@@ -411,6 +409,26 @@ class Game:
                 os.path.join(self.sprite_dir, "factory_sprite.png"),
                 0, 0, 992, 672, 3),
             Layers.FRONT_1 : self.load_frame(os.path.join(self.sprite_dir, "factory_sprite_foreground.png")),
+        }
+
+        # office sprite
+        self.assets[WorldType.OFFICE] = {
+            Layers.FLOOR_0 : self.load_frame(os.path.join(self.sprite_dir, "office_sprite.png")),
+            Layers.FRONT_1 : self.load_frame(os.path.join(self.sprite_dir, "office_sprite_foreground.png"))
+        }
+
+        # machine icons
+        machine_icons = self.load_frames(
+            os.path.join(self.sprite_dir, "machine_icons.png"),
+                0, 0, 32, 32, 6 # six icons for the six machines present
+        )
+        self.assets[Animation.ICONS] = {
+            EntityType.CONVEYOR : machine_icons[0],
+            EntityType.BUZZSAW : machine_icons[1],
+            EntityType.CRUSHER : machine_icons[2],
+            EntityType.FURNACE : machine_icons[3],
+            EntityType.WOOD_GENERATOR : machine_icons[4],
+            EntityType.STONE_GENERATOR : machine_icons[5]
         }
 
     # helper method for loading assets:
