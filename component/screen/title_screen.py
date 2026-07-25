@@ -1,6 +1,7 @@
 from .states import State as Base
 from .test_world import TestWorld
 from .level_factory import FactoryLevel
+from .level_office import OfficeLevel
 
 class TitleScreen(Base):
     def __init__(self, game):
@@ -11,6 +12,7 @@ class TitleScreen(Base):
         # condition check to move next screen
         if actions["space"]:
             new_state = FactoryLevel(self.game)
+            #new_state = OfficeLevel(self.game)
             new_state.enter_state()
         self.game.reset_key("space")
 
