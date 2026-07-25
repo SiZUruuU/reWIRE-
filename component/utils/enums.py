@@ -45,6 +45,7 @@ class EntityType(Enum):
 
 class WorldType(Enum):
     FACTORY = "factory"
+    OFFICE = "office"
 
 class ResourceType(Enum):
     WOOD = "wood"
@@ -81,6 +82,8 @@ class Animation(Enum):
     TOPRIGHT_F = auto()
     BOTRIGHT = auto()
     BOTRIGHT_F = auto()
+
+    ICONS = auto()
 
 class Fonts(Enum):
     TITLE = auto()
