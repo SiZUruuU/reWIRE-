@@ -3,7 +3,6 @@ from .generator import Generator
 from pygame import Vector2
 
 FUEL_VALUES = {
-    ResourceType.WOOD: 1,
     ResourceType.CHARCOAL: 4
 }
 
@@ -59,9 +58,17 @@ class StoneGenerator(Generator):
         return self.input_buffer.get(port) is not None
 
     def update(self, global_time, delta_time, actions):
+        if self.world.is_prep_stage or self.world.day_over:
+            self.animate(global_time)
+            return
+        if self.breakdown.is_fully_stopped:
+            self.try_release()
+            self.animate(global_time)
+            return
         if self.output_buffer is None and self.input_buffer.get("fuel") is not None:
             self.timer += delta_time
-            if self.timer >= self.cooldown:
+            effective_cooldown = self.cooldown * self.breakdown.slowdown_multiplier
+            if self.timer >= effective_cooldown:
                 self.timer = 0.0
                 self.generate()
         self.try_release()
@@ -95,7 +102,9 @@ class StoneGenerator(Generator):
         frame_index = int(global_time * self.animation_speed) % total
         self.image = frames[frame_index]
 
-        if not self.world.is_prep_stage and self.output_buffer is None and self.input_buffer.get("fuel") is not None:
+        if self.breakdown.is_broken:
+            self.apply_shake(self.position, global_time % 0.3, 0.3, max_intensity=3.0)
+        elif not self.world.is_prep_stage and self.output_buffer is None and self.input_buffer.get("fuel") is not None:
             self.apply_shake(self.position, self.timer, self.cooldown, max_intensity=1.0)
         else:
             self.rect.topleft = (int(self.position.x), int(self.position.y))

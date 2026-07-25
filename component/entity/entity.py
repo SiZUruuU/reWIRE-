@@ -135,15 +135,16 @@ class BaseEntity(ABC, pygame.sprite.Sprite):
 
     ## VISUAL EFFECTS STUFF:
     def apply_shake(self, base_pos, elapsed_seconds, duration_seconds, max_intensity):
-        # shake duration finished — snap back to rest position
         if duration_seconds <= 0 or elapsed_seconds >= duration_seconds:
             self.rect.topleft = (int(base_pos.x), int(base_pos.y))
             return
 
         progress = elapsed_seconds / duration_seconds
+        # add a guard, clamp the value
+        progress = max(0.0, min(progress, 1.0))
         current_intensity = pygame.math.lerp(max_intensity, 0.0, progress)
 
         offset_x = random.uniform(-current_intensity, current_intensity)
         offset_y = random.uniform(-current_intensity, current_intensity)
         self.rect.x = int(base_pos.x + offset_x)
-        self.rect.y = int(base_pos.y + offset_y)    
+        self.rect.y = int(base_pos.y + offset_y) 

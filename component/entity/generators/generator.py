@@ -2,7 +2,7 @@ from ...utils import EntityType, Animation, Direction, check_tile_at
 from ..resources.resource import ResourceEntity
 from ..entity import BaseEntity
 from .generator_data import GENERATOR_DATA
-from pygame import Vector2
+from ..machines.breakdown import BreakdownComponent
 
 # Since generators are all the same, difference are same data name with different values,
 # We will make a single class to create all the kinds of generators
@@ -24,6 +24,7 @@ class Generator(BaseEntity):
 
         self.timer = 0.0
         self.output_buffer = None
+        self.breakdown = BreakdownComponent()
 
         dir_key = Direction((int(direction.x), int(direction.y)))
         self.animation_speed = 10.0
@@ -31,7 +32,7 @@ class Generator(BaseEntity):
         self.image = self.animations[0]
         self.rect = self.image.get_rect(topleft=(position.x, position.y))
         self.width = self.image.get_width()
-        self.height = self.image.get_height()
+        self.height = self.image.get_height()        
 
     def update(self, global_time, delta_time, actions):
         if self.world.is_prep_stage or self.world.day_over:
@@ -39,13 +40,17 @@ class Generator(BaseEntity):
             return
         if self.output_buffer is None:
             self.timer += delta_time
-            if self.timer >= self.cooldown:
+            effective_cooldown = self.cooldown * self.breakdown.slowdown_multiplier
+            if self.timer >= effective_cooldown:
                 self.timer = 0.0
                 self.generate()
         self.try_release()
-        self.animate(global_time)  
+        self.animate(global_time)
 
     def generate(self):
+        if self.breakdown.is_fully_stopped:
+            return
+
         output_position = self.output_position
         infront = check_tile_at(output_position.x, output_position.y, self.world.game, self.world.map)
         if infront is None:
@@ -62,6 +67,7 @@ class Generator(BaseEntity):
                 return
 
         self.output_buffer = ResourceEntity(self.position.copy(), self.world, self.resource_type)
+        self.breakdown.register_cycle()
 
     def try_release(self):
         if self.output_buffer is None:
@@ -75,7 +81,9 @@ class Generator(BaseEntity):
             self.output_buffer = None
 
     def animate(self, global_time):
-        if not self.world.is_prep_stage and self.output_buffer is None:
+        if self.breakdown.is_broken:
+            self.apply_shake(self.position, global_time % 0.3, 0.3, max_intensity=3.0)
+        elif not self.world.is_prep_stage and self.output_buffer is None:
             elapsed = self.timer
             self.apply_shake(self.position, elapsed, self.cooldown, max_intensity=0.5)
         else:

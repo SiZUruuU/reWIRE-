@@ -14,8 +14,8 @@ class Game:
         # game world size
         self.GAME_WIDTH, self.GAME_HEIGHT = 384*2, 192*2
         self.TILE_SIZE = 32
-        # upscale size - basically just twice the game surface
-        self.SCREEN_WIDTH, self.SCREEN_HEIGHT = self.GAME_WIDTH*1.5, self.GAME_HEIGHT*1.5
+        # upscale size - basically just twice the game surfaceddddd
+        self.SCREEN_WIDTH, self.SCREEN_HEIGHT = 1280, 600
 
         # Create game world and display surface:
         # game_canvas is where the game logic happens so use this for world coords
@@ -431,6 +431,38 @@ class Game:
             EntityType.STONE_GENERATOR : machine_icons[5]
         }
 
+        machine_blueprint_icons = self.load_frames(
+            os.path.join(self.sprite_dir, "machine_icons_blueprint.png"),
+            0, 0, 64, 64, 6
+        )
+        self.assets[Animation.ICONS_BLUEPRINT] = {
+            EntityType.CONVEYOR : machine_blueprint_icons[0],
+            EntityType.BUZZSAW : machine_blueprint_icons[1],
+            EntityType.CRUSHER : machine_blueprint_icons[2],
+            EntityType.FURNACE : machine_blueprint_icons[3],
+            EntityType.WOOD_GENERATOR : machine_blueprint_icons[4],
+            EntityType.STONE_GENERATOR : machine_blueprint_icons[5]
+        }
+
+        # resource currency icon
+        resource_icons = self.load_frames(
+            os.path.join(self.sprite_dir, "resources_icons.png"),
+            0, 0, 32, 32, 3
+        )
+        self.assets[Animation.RESOURCE_ICONS] = {
+            ResourceType.GEAR : resource_icons[0],
+            ResourceType.PLATE : resource_icons[1],
+            ResourceType.ENGINE : resource_icons[2],
+        }
+
+        # shop panel rect
+        shop_panel = self.load_frame(os.path.join(self.sprite_dir, "shop_panel.png"))
+        self.assets[Animation.SHOP_PANEL] = shop_panel
+
+        # workshop panel rect
+        workshop_panel = self.load_frame(os.path.join(self.sprite_dir, "workshop_panel.png"))
+        self.assets[Animation.WORKSHOP_PANEL] = workshop_panel
+
     # helper method for loading assets:
     def load_frames(self, filename, x, y, width, height, amount):
         sprite_sheet = pygame.image.load(filename).convert_alpha()
@@ -465,4 +497,4 @@ if __name__ == "__main__":
     while game.isRunning:
         game.game_loop()
         game.clock.tick(60)
-        pygame.display.set_caption(f"FPS: {int(game.clock.get_fps())}")
+        pygame.display.set_caption("Re:WIRE v1.0.0")

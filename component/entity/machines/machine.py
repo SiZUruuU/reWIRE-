@@ -1,6 +1,7 @@
 from ..entity import BaseEntity
 from ...utils import EntityType, Direction, Animation, check_tile_at, Layers
-from pygame import Vector2, transform
+from pygame import Vector2
+from .breakdown import BreakdownComponent
 
 class MachineEntity(BaseEntity):
     # important! when making machines that are bigger than 1x1, make sure
@@ -45,6 +46,7 @@ class MachineEntity(BaseEntity):
         self.process_time = 0.0
         self.is_processing = False
         self.active_recipe = None
+        self.breakdown = BreakdownComponent()
     
     def update(self, global_time, delta_time, actions):
         if self.world.is_prep_stage or self.world.day_over:
@@ -59,11 +61,12 @@ class MachineEntity(BaseEntity):
 #        self.image = self.get_frame_animation(None, global_time)
 
     def animate(self, global_time):
-        if self.is_processing and self.active_recipe is not None:
+        if self.breakdown.is_broken:
+            self.apply_shake(self.position, global_time % 0.3, 0.3, max_intensity=3.0)
+        elif self.is_processing and self.active_recipe is not None:
             duration = self.active_recipe["duration"]
             elapsed = duration - self.process_time
-            base_pos = self.position
-            self.apply_shake(base_pos, elapsed, duration, max_intensity=0.1)
+            self.apply_shake(self.position, elapsed, duration, max_intensity=0.1)
         else:
             self.rect.topleft = (int(self.position.x), int(self.position.y))
 
@@ -85,26 +88,24 @@ class MachineEntity(BaseEntity):
         return True
 
     def process(self, delta_time):
-        # if machine's state is currently processing:
+        if self.breakdown.is_fully_stopped:
+            return
+
         if self.is_processing:
-            # starts processing
             self.process_time -= delta_time
-            # process finished
             if self.process_time <= 0.0:
                 self.complete_processing()
             return
 
-        # check if there's no material to process or is still holding on a material:
         material = self.input_buffer.get("material")
         if material is None or self.output_buffer is not None:
             return
-        
-        # build the new material:
-        recipe = self.recipes.get(material.resource_type)        
+
+        recipe = self.recipes.get(material.resource_type)
         if recipe is None:
             return
         self.active_recipe = recipe
-        self.process_time = recipe["duration"]
+        self.process_time = recipe["duration"] * self.breakdown.slowdown_multiplier
         self.is_processing = True
     
     def complete_processing(self):
@@ -120,6 +121,7 @@ class MachineEntity(BaseEntity):
         self.is_processing = False
         self.process_time = 0.0
         self.active_recipe = None
+        self.breakdown.register_cycle()
     
     def sync_resource(self):
         resource = self.input_buffer.get("material")

@@ -1,20 +1,23 @@
-import pygame
+import pygame, random
 
 from .states import State
 from ..map.factory_map import FactoryMap
 from ..camera import Camera, Follow
 from ..entity import Player
 from .lose_screen import LoseScreen
-from ..utils import get_world_mousePos, EntityType, Animation, Direction, Fonts
+from ..utils import get_world_mousePos, EntityType, Animation, Direction, Fonts, ParticleSystem
 from component.utils.enums import AudioType, OST, SFX
 from component.utils.audio import AudioComp
 from .economy import Economy
+from .machine_inventory import MachineInventory
+from .gui.rewire_gui import RewireGUI
 
 # FACTORY LEVEL CONFIG
-DAY_DURATION = 50.0 # for testing
-STARTING_QUOTA = 10 # for testing
+DAY_DURATION = 100
+STARTING_QUOTA = 0
 PREP_STAGE_PICKUP_DURATION = 0.5
 DOOR_HOLD_DURATION = 3.0
+SPARK_INTERVAL = 0.15
 PICKUP_DURATIONS = {
     EntityType.CONVEYOR: 2.0,
     EntityType.BUZZSAW: 5.0,
@@ -23,10 +26,18 @@ PICKUP_DURATIONS = {
     EntityType.WOOD_GENERATOR: 15.0,
     EntityType.STONE_GENERATOR: 15.0,
 }
+STARTING_MACHINE_KIT = {
+    EntityType.CONVEYOR: 5,
+    EntityType.BUZZSAW: 0,
+    EntityType.CRUSHER: 0,
+    EntityType.FURNACE: 0,
+    EntityType.WOOD_GENERATOR: 0,
+    EntityType.STONE_GENERATOR: 0,
+}
 
 # p.s for method explanations etc, check test world. Code here should be clean.
 class FactoryLevel(State):
-    def __init__(self, game, economy=None, day_number=1, quota=None):
+    def __init__(self, game, economy=None, day_number=1, quota=None, machine_inventory=None, placed_machines=None):
         super().__init__(game)
 
         # FACTORY WORLD CONFIG
@@ -55,13 +66,28 @@ class FactoryLevel(State):
         self.day_number = day_number
         self.quota = quota if quota is not None else STARTING_QUOTA
 
+        self.rewire_gui = RewireGUI(self)
+
+        # apply starter kit
+        if machine_inventory is not None:
+            self.machine_inventory = machine_inventory
+        elif day_number == 1:            
+            self.machine_inventory = MachineInventory(dict(STARTING_MACHINE_KIT))
+        else:            
+            self.machine_inventory = MachineInventory({})
+
         self.all_sprites = pygame.sprite.LayeredUpdates()
         self.game = game
-        self.map = FactoryMap(self)        
+        self.map = FactoryMap(self)
+
 
         self.player = Player(pygame.Vector2(self.WIDTH/2, self.HEIGHT/2), self, EntityType.PLAYER)
         self.camera = Camera(self.player, game.GAME_WIDTH, game.GAME_HEIGHT)
         self.camera.setmethod(Follow(self.camera, self.player))
+
+        # cash particles and machine breakdown
+        self.particles = ParticleSystem()
+        self.spark_timer = 0.0        
 
         self.directions = [
             pygame.Vector2(-1, 0),
@@ -77,6 +103,18 @@ class FactoryLevel(State):
                 self.directions[0], 
                 EntityType.SELLBOX
             )
+
+        if day_number == 1 and placed_machines is None:
+            self.map.place_entity(
+                pygame.Vector2(6, 4),
+                self.directions[0],
+                EntityType.WOOD_GENERATOR
+            )
+            self.map.place_entity(
+                pygame.Vector2(5, 4),
+                self.directions[0],
+                EntityType.BUZZSAW
+            )
         
         self.dir_index = 0
         self.direction = self.directions[0]
@@ -90,15 +128,7 @@ class FactoryLevel(State):
             EntityType.FURNACE,
             EntityType.WOOD_GENERATOR,
             EntityType.STONE_GENERATOR,
-        ]        
-        self.machine_inventory = {
-            EntityType.CONVEYOR: 1,
-            EntityType.BUZZSAW: 1,
-            EntityType.CRUSHER: 1,
-            EntityType.FURNACE: 1,
-            EntityType.WOOD_GENERATOR: 1,
-            EntityType.STONE_GENERATOR: 1,
-        }
+        ]
 
         self.pickup_target = None
         self.pickup_progress = 0.0
@@ -117,6 +147,9 @@ class FactoryLevel(State):
 
         self.night_overlay = pygame.Surface((self.WIDTH, self.HEIGHT), pygame.SRCALPHA)
         self.day_duration = DAY_DURATION
+
+        # restore placed machines
+        self.restore_placed_machines(placed_machines)
 
         self.debug_mode = False
 
@@ -138,7 +171,14 @@ class FactoryLevel(State):
         # resolve player collision with obstacles
         resolved = self.map.resolve_collisions(self.player.rect, prev_rect)
         self.player.rect.topleft = resolved.topleft
-        self.player.position = pygame.Vector2(self.player.rect.topleft)        
+        self.player.position = pygame.Vector2(self.player.rect.topleft)
+
+        self.spark_timer += delta_time
+        if self.spark_timer >= SPARK_INTERVAL:
+            self.spark_timer = 0.0
+            self.spawn_breakdown_sparks()
+
+        self.particles.update(delta_time)
 
     def handle_inputs(self, actions):
         mouse = get_world_mousePos(self.game, self.camera)
@@ -169,18 +209,31 @@ class FactoryLevel(State):
 
         # placing down machines
         if actions["LMB"] and self.selected_entity != EntityType.NONE:
-            location = pygame.Vector2(tile_x, tile_y)
-            self.map.place_entity(location, self.direction, self.selected_entity)
-            AudioComp.play_sfx(self, AudioType.SFX, SFX.HOVER)
+            if self.machine_inventory.has(self.selected_entity):
+                location = pygame.Vector2(tile_x, tile_y)
+                placed = self.map.place_entity(location, self.direction, self.selected_entity)
+                if placed is True:
+                    self.machine_inventory.remove(self.selected_entity)
             self.game.reset_key("LMB")
 
         # for the machine removal feature
         self.handle_pickup(actions, tile_x, tile_y)
 
-        # for picking up items
+        # for picking up items and fixing broken machines
         if actions["space"]:
-            self.player.try_interact(self.map, self.game, self.camera)
+            tile_x, tile_y = self.player.get_interact_tile(self.map, self.game, self.camera)
+            target = self.map.grid[tile_x][tile_y] if tile_x is not None and self.map.is_tile_valid(tile_x, tile_y) else None
+
+            if target is not None and hasattr(target, "breakdown") and target.breakdown.is_broken:
+                if not self.rewire_gui.is_open:
+                    self.rewire_gui.open(target)
+            else:
+                self.player.try_interact(self.map, self.game, self.camera)
             self.game.reset_key("space")
+
+        # rewiring minigame
+        if self.rewire_gui.is_open:
+            self.rewire_gui.handle_input(actions)
 
         # end prep stage, starts the day proper
         if actions["key_enter"] and self.is_prep_stage:
@@ -234,12 +287,15 @@ class FactoryLevel(State):
             covered = [(tx, ty)]
 
         # release/destroy any resources held
-        self._release_held_resources(entity)
+        self._release_held_resources(entity)        
 
         for tx, ty in covered:
             if self.map.is_tile_valid(tx, ty):
                 self.map.grid[tx][ty] = None
         self.all_sprites.remove(entity)
+
+        # get machine back to inv
+        self.machine_inventory.add(entity.entity_type)
 
         for tx, ty in covered:
             for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
@@ -299,8 +355,8 @@ class FactoryLevel(State):
 
         if self.earned_cash_today >= self.quota:
             self.economy.add_cash(self.earned_cash_today)
-            self.economy.cash = round(self.economy.cash - self.quota * 0.5, 5)
-            self.quota = round(self.quota + self.economy.cash * 0.25 + self.quota * 0.25, 5)
+            self.economy.cash = round(self.economy.cash - self.quota * 0.5, 3)
+            self.quota = round(self.quota + self.economy.cash * 0.25 + self.quota * 0.25, 3)
             self.day_number += 1
             self.on_day_won()
         else:
@@ -310,7 +366,6 @@ class FactoryLevel(State):
         self.earned_cash_today = 0
 
     def on_day_won(self):
-        # local import
         from .level_office import OfficeLevel
         self.exit_state()
         office = OfficeLevel(
@@ -318,6 +373,8 @@ class FactoryLevel(State):
             economy=self.economy,
             day_number=self.day_number,
             quota=self.quota,
+            machine_inventory=self.machine_inventory,
+            placed_machines=self.snapshot_placed_machines(),
         )
         office.enter_state()
 
@@ -336,7 +393,8 @@ class FactoryLevel(State):
         self.economy.cash = 0
         self.economy.resources = {}
         self.quota = STARTING_QUOTA
-        self.day_number = 1    
+        self.day_number = 1
+        self.machine_inventory = MachineInventory(dict(STARTING_MACHINE_KIT))
 
     # (> w <)?
 
@@ -362,6 +420,7 @@ class FactoryLevel(State):
         # draws map foreground
         self.map.draw_foreground(display, self.camera)
 
+        self.particles.draw(display, self.camera.offset)
         self.draw_night_overlay(display)
 
         if self.selected_entity != EntityType.NONE:
@@ -381,6 +440,10 @@ class FactoryLevel(State):
         self.draw_door_prompt(display)
         self.draw_machine_inventory(display)
         self.draw_day_counter(display)
+        self.draw_broken_indicators(display)
+        self.draw_rewire_prompt(display)
+
+        self.rewire_gui.draw(display)
 
         # debugs
         self.show_all_obstacles(display)
@@ -392,6 +455,9 @@ class FactoryLevel(State):
     ## DRAW METHODS
     # HUD and visual aids here:
     def draw_placement_preview(self, display):
+        if not self.machine_inventory.has(self.selected_entity):
+            return
+        
         mouse = get_world_mousePos(self.game, self.camera)
         tile_x, tile_y = self.map.world_to_tile(mouse['world_x'], mouse['world_y'])
         sprite = self.get_preview_sprite(self.selected_entity, self.direction)
@@ -603,7 +669,7 @@ class FactoryLevel(State):
                 continue
 
             y = start_y + i * (icon_size + padding)
-            count = self.machine_inventory.get(entity_type, 0)
+            count = self.machine_inventory.get_count(entity_type)
             owned = count > 0
 
             display_icon = icon.copy()
@@ -642,6 +708,99 @@ class FactoryLevel(State):
         font = self.game.assets[Fonts.HEADER]
         text = font.render(f"DAY {self.day_number}", True, (255, 255, 255))
         display.blit(text, (self.game.GAME_WIDTH // 2 - text.get_width() // 2, 10))
+
+    def draw_broken_indicators(self, display):
+        font = self.game.assets[Fonts.HEADER]
+        blink_on = int(self.game.global_time * 4) % 2 == 0
+        if not blink_on:
+            return
+
+        seen = set()
+        for sprite in self.all_sprites:
+            if not hasattr(sprite, "breakdown"):
+                continue
+            if not sprite.breakdown.is_broken:
+                continue
+            if id(sprite) in seen:
+                continue
+            seen.add(id(sprite))
+
+            screen_x = sprite.rect.centerx - self.camera.offset.x
+            screen_y = sprite.rect.top - self.camera.offset.y - 20
+
+            text = font.render("!", True, (255, 220, 40))
+            text_rect = text.get_rect(center=(screen_x, screen_y))
+            bg = pygame.Surface((text_rect.width + 8, text_rect.height + 4), pygame.SRCALPHA)
+            bg.fill((0, 0, 0, 150))
+            display.blit(bg, (text_rect.x - 4, text_rect.y - 2))
+            display.blit(text, text_rect)
+
+    def draw_rewire_prompt(self, display):
+        tile_x, tile_y = self.player.get_interact_tile(self.map, self.game, self.camera)
+        if tile_x is None:
+            return
+        target = self.map.grid[tile_x][tile_y] if self.map.is_tile_valid(tile_x, tile_y) else None
+        if target is None or not hasattr(target, "breakdown") or not target.breakdown.is_broken:
+            return
+
+        font = self.game.assets[Fonts.BODY]
+        text = font.render("Press 'SPACE' to fix", True, (255, 220, 40))
+        screen_x = target.rect.centerx - self.camera.offset.x
+        screen_y = target.rect.top - self.camera.offset.y - 40
+        text_rect = text.get_rect(center=(screen_x, screen_y))
+        bg = pygame.Surface((text_rect.width + 12, text_rect.height + 6), pygame.SRCALPHA)
+        bg.fill((0, 0, 0, 160))
+        display.blit(bg, (text_rect.x - 6, text_rect.y - 3))
+        display.blit(text, text_rect)
+
+
+    # machine persistence
+    def snapshot_placed_machines(self):
+        seen = set()
+        snapshot = []
+        for x in range(len(self.map.grid)):
+            for y in range(len(self.map.grid[0])):
+                entity = self.map.grid[x][y]
+                if entity is None or entity.entity_type == EntityType.SELLBOX:
+                    continue
+                if id(entity) in seen:
+                    continue
+                seen.add(id(entity))
+                snapshot.append({
+                    "entity_type": entity.entity_type,
+                    "position": (entity.position.x, entity.position.y),
+                    "direction": (entity.direction.x, entity.direction.y),
+                })
+        return snapshot
+    
+    def restore_placed_machines(self, snapshot):
+        if not snapshot:
+            return
+        for entry in snapshot:
+            world_x, world_y = entry["position"]
+            tile_x, tile_y = self.map.world_to_tile(world_x, world_y)
+            direction = pygame.Vector2(*entry["direction"])
+            placed = self.map.place_entity(pygame.Vector2(tile_x, tile_y), direction, entry["entity_type"])
+            if placed is not True:
+                print(f"RESTORE FAILED for {entry['entity_type']} at tile ({tile_x},{tile_y}), result: {placed}")
+
+    def spawn_breakdown_sparks(self):
+        for sprite in self.all_sprites:
+            if not hasattr(sprite, "breakdown") or not sprite.breakdown.is_broken:
+                continue
+            rect = sprite.rect
+            spark_pos = (
+                random.uniform(rect.left, rect.right),
+                random.uniform(rect.top, rect.bottom)
+            )
+            self.particles.emit_burst(
+                spark_pos,
+                color=(255, 200, 80),
+                count=random.randint(1, 3),
+                size_range=(1, 6),
+                speed_range=(20, 80),
+                lifetime_range=(0.15, 0.5)
+            )
 
     # for debugging
     def show_all_obstacles(self, display):

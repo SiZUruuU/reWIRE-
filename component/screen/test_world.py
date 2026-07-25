@@ -184,7 +184,6 @@ class TestWorld(State):
 
         if self.pickup_target is None:
             self.pickup_target = entity
-            print(self.pickup_target)
             self.pickup_progress = 0.0
             self.pickup_required = (
                 PREP_STAGE_PICKUP_DURATION if self.is_prep_stage

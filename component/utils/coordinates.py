@@ -33,3 +33,9 @@ def check_tile_at(world_x, world_y, game, world_map):
     except IndexError:
         return None
     return tile
+
+def get_scaled_mouse_pos(game):
+    mx, my = pygame.mouse.get_pos()
+    scaled_x = mx * (game.GAME_WIDTH / game.SCREEN_WIDTH)
+    scaled_y = my * (game.GAME_HEIGHT / game.SCREEN_HEIGHT)
+    return scaled_x, scaled_y

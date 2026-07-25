@@ -62,19 +62,19 @@ class BaseMap(ABC):
     def is_tile_valid(self, tile_x, tile_y):
         return 0 <= tile_x < len(self.grid) and 0 <= tile_y < len(self.grid[0])
 
-    def place_entity(self, grid: Vector2, direction: Vector2, entity_type: EntityType):
+    def place_entity(self, grid, direction, entity_type):
         x, y = int(grid.x), int(grid.y)
         if not self.is_tile_valid(x, y):
             return False
         old_machine = self.grid[x][y]
         if old_machine is not None:
-            if old_machine.entity_type == entity_type: #and isinstance(old_machine, Conveyor):
+            if old_machine.entity_type == entity_type:
                 old_machine.apply_direction(direction)
                 self.belt_neighbor_recalculation(x, y)
                 next_x = x + int(direction.x)
                 next_y = y + int(direction.y)
                 self.belt_neighbor_recalculation(next_x, next_y)
-                return True
+                return "rotated"
             return False
 
         entity_class = self.ENTITY[entity_type]

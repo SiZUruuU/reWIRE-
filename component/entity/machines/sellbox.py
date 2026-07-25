@@ -25,6 +25,15 @@ class SellBox(MachineEntity):
         value = RESOURCE_DATA.get(resource.resource_type, {}).get("value", 0)
         self.world.earned_cash_today = round(self.world.earned_cash_today + value, 5)
 
+        self.world.particles.emit_burst(
+            resource.position,
+            color=(80, 220, 100),
+            count=14,
+            size_range=(2, 5),
+            speed_range=(30, 200),
+            lifetime_range=(0.25, 1),
+        )
+
         resource.take_resource(self)
         self.world.all_sprites.remove(resource)
         return True
