@@ -37,7 +37,7 @@ class Furnace(MachineEntity):
             ResourceType.SAND: {"output": ResourceType.GLASS, "duration": 6.0},
         }
 
-        self.apply_direction(direction)   # <- last line; sets self.image, no dead code after it
+        self.apply_direction(direction)
     
     def can_accept(self, resource, port):
         if port is None:

@@ -5,12 +5,12 @@ class Economy:
         self.resources = {}
 
     def add_cash(self, amount):
-        self.cash += amount
+        self.cash = round(self.cash + amount, 4)
 
     def spend_cash(self, amount):
         if self.cash < amount:
             return False
-        self.cash -= amount
+        self.cash = round(self.cash - amount, 4)
         return True
 
     def add_resource(self, resource_type, amount=1):

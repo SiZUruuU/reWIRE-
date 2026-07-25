@@ -31,7 +31,7 @@ class BreakdownComponent:
     @property
     def slowdown_multiplier(self):
         if self.is_broken and self.severity == "inefficient":
-            return 2.5  # tune to taste
+            return 2.5
         return 1.0
 
     @property

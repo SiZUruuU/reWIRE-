@@ -1,4 +1,5 @@
 import pygame, random
+import pygame, random
 
 from .states import State
 from ..map.factory_map import FactoryMap
@@ -6,25 +7,29 @@ from ..camera import Camera, Follow
 from ..entity import Player
 from .lose_screen import LoseScreen
 from ..utils import get_world_mousePos, EntityType, Animation, Direction, Fonts, ParticleSystem
+from ..utils import get_world_mousePos, EntityType, Animation, Direction, Fonts, ParticleSystem
 from component.utils.enums import AudioType, OST, SFX
 from component.utils.audio import AudioComp
 from .economy import Economy
 from .machine_inventory import MachineInventory
 from .gui.rewire_gui import RewireGUI
+from .machine_inventory import MachineInventory
+from .gui.rewire_gui import RewireGUI
 
 # FACTORY LEVEL CONFIG
-DAY_DURATION = 100
-STARTING_QUOTA = 0
+DAY_DURATION = 180 # 3 mins
+STARTING_QUOTA = 25.65
 PREP_STAGE_PICKUP_DURATION = 0.5
 DOOR_HOLD_DURATION = 3.0
 SPARK_INTERVAL = 0.15
+SPARK_INTERVAL = 0.15
 PICKUP_DURATIONS = {
     EntityType.CONVEYOR: 2.0,
-    EntityType.BUZZSAW: 5.0,
-    EntityType.CRUSHER: 5.0,
-    EntityType.FURNACE: 8.5,
-    EntityType.WOOD_GENERATOR: 15.0,
-    EntityType.STONE_GENERATOR: 15.0,
+    EntityType.BUZZSAW: 3.0,
+    EntityType.CRUSHER: 4.0,
+    EntityType.FURNACE: 5.5,
+    EntityType.WOOD_GENERATOR: 7.0,
+    EntityType.STONE_GENERATOR: 8.5,
 }
 STARTING_MACHINE_KIT = {
     EntityType.CONVEYOR: 5,
@@ -37,6 +42,7 @@ STARTING_MACHINE_KIT = {
 
 # p.s for method explanations etc, check test world. Code here should be clean.
 class FactoryLevel(State):
+    def __init__(self, game, economy=None, day_number=1, quota=None, machine_inventory=None, placed_machines=None):
     def __init__(self, game, economy=None, day_number=1, quota=None, machine_inventory=None, placed_machines=None):
         super().__init__(game)
 
@@ -76,14 +82,30 @@ class FactoryLevel(State):
         else:            
             self.machine_inventory = MachineInventory({})
 
+        self.rewire_gui = RewireGUI(self)
+
+        # apply starter kit
+        if machine_inventory is not None:
+            self.machine_inventory = machine_inventory
+        elif day_number == 1:            
+            self.machine_inventory = MachineInventory(dict(STARTING_MACHINE_KIT))
+        else:            
+            self.machine_inventory = MachineInventory({})
+
         self.all_sprites = pygame.sprite.LayeredUpdates()
         self.game = game
+        self.map = FactoryMap(self)
+
         self.map = FactoryMap(self)
 
 
         self.player = Player(pygame.Vector2(self.WIDTH/2, self.HEIGHT/2), self, EntityType.PLAYER)
         self.camera = Camera(self.player, game.GAME_WIDTH, game.GAME_HEIGHT)
         self.camera.setmethod(Follow(self.camera, self.player))
+
+        # cash particles and machine breakdown
+        self.particles = ParticleSystem()
+        self.spark_timer = 0.0        
 
         # cash particles and machine breakdown
         self.particles = ParticleSystem()
@@ -111,7 +133,7 @@ class FactoryLevel(State):
                 EntityType.WOOD_GENERATOR
             )
             self.map.place_entity(
-                pygame.Vector2(5, 4),
+                pygame.Vector2(4, 4),
                 self.directions[0],
                 EntityType.BUZZSAW
             )
@@ -128,6 +150,7 @@ class FactoryLevel(State):
             EntityType.FURNACE,
             EntityType.WOOD_GENERATOR,
             EntityType.STONE_GENERATOR,
+        ]
         ]
 
         self.pickup_target = None
@@ -147,6 +170,9 @@ class FactoryLevel(State):
 
         self.night_overlay = pygame.Surface((self.WIDTH, self.HEIGHT), pygame.SRCALPHA)
         self.day_duration = DAY_DURATION
+
+        # restore placed machines
+        self.restore_placed_machines(placed_machines)
 
         # restore placed machines
         self.restore_placed_machines(placed_machines)
@@ -172,6 +198,14 @@ class FactoryLevel(State):
         resolved = self.map.resolve_collisions(self.player.rect, prev_rect)
         self.player.rect.topleft = resolved.topleft
         self.player.position = pygame.Vector2(self.player.rect.topleft)
+        self.player.position = pygame.Vector2(self.player.rect.topleft)
+
+        self.spark_timer += delta_time
+        if self.spark_timer >= SPARK_INTERVAL:
+            self.spark_timer = 0.0
+            self.spawn_breakdown_sparks()
+
+        self.particles.update(delta_time)
 
         self.spark_timer += delta_time
         if self.spark_timer >= SPARK_INTERVAL:
@@ -214,13 +248,20 @@ class FactoryLevel(State):
                 placed = self.map.place_entity(location, self.direction, self.selected_entity)
                 if placed is True:
                     self.machine_inventory.remove(self.selected_entity)
+            if self.machine_inventory.has(self.selected_entity):
+                location = pygame.Vector2(tile_x, tile_y)
+                placed = self.map.place_entity(location, self.direction, self.selected_entity)
+                if placed is True:
+                    self.machine_inventory.remove(self.selected_entity)
             self.game.reset_key("LMB")
 
         # for the machine removal feature
         self.handle_pickup(actions, tile_x, tile_y)
 
         # for picking up items and fixing broken machines
+        # for picking up items and fixing broken machines
         if actions["space"]:
+            self.selected_entity = EntityType.NONE
             tile_x, tile_y = self.player.get_interact_tile(self.map, self.game, self.camera)
             target = self.map.grid[tile_x][tile_y] if tile_x is not None and self.map.is_tile_valid(tile_x, tile_y) else None
 
@@ -230,6 +271,10 @@ class FactoryLevel(State):
             else:
                 self.player.try_interact(self.map, self.game, self.camera)
             self.game.reset_key("space")
+
+        # rewiring minigame
+        if self.rewire_gui.is_open:
+            self.rewire_gui.handle_input(actions)
 
         # rewiring minigame
         if self.rewire_gui.is_open:
@@ -288,11 +333,15 @@ class FactoryLevel(State):
 
         # release/destroy any resources held
         self._release_held_resources(entity)        
+        self._release_held_resources(entity)        
 
         for tx, ty in covered:
             if self.map.is_tile_valid(tx, ty):
                 self.map.grid[tx][ty] = None
         self.all_sprites.remove(entity)
+
+        # get machine back to inv
+        self.machine_inventory.add(entity.entity_type)
 
         # get machine back to inv
         self.machine_inventory.add(entity.entity_type)
@@ -356,7 +405,7 @@ class FactoryLevel(State):
         if self.earned_cash_today >= self.quota:
             self.economy.add_cash(self.earned_cash_today)
             self.economy.cash = round(self.economy.cash - self.quota * 0.5, 3)
-            self.quota = round(self.quota + self.economy.cash * 0.25 + self.quota * 0.25, 3)
+            self.quota = round(self.quota + self.economy.cash * 0.35 + self.quota * 0.35, 3)
             self.day_number += 1
             self.on_day_won()
         else:
@@ -373,6 +422,8 @@ class FactoryLevel(State):
             economy=self.economy,
             day_number=self.day_number,
             quota=self.quota,
+            machine_inventory=self.machine_inventory,
+            placed_machines=self.snapshot_placed_machines(),
             machine_inventory=self.machine_inventory,
             placed_machines=self.snapshot_placed_machines(),
         )
@@ -393,6 +444,8 @@ class FactoryLevel(State):
         self.economy.cash = 0
         self.economy.resources = {}
         self.quota = STARTING_QUOTA
+        self.day_number = 1
+        self.machine_inventory = MachineInventory(dict(STARTING_MACHINE_KIT))
         self.day_number = 1
         self.machine_inventory = MachineInventory(dict(STARTING_MACHINE_KIT))
 
@@ -421,6 +474,7 @@ class FactoryLevel(State):
         self.map.draw_foreground(display, self.camera)
 
         self.particles.draw(display, self.camera.offset)
+        self.particles.draw(display, self.camera.offset)
         self.draw_night_overlay(display)
 
         if self.selected_entity != EntityType.NONE:
@@ -444,6 +498,10 @@ class FactoryLevel(State):
         self.draw_rewire_prompt(display)
 
         self.rewire_gui.draw(display)
+        self.draw_broken_indicators(display)
+        self.draw_rewire_prompt(display)
+
+        self.rewire_gui.draw(display)
 
         # debugs
         self.show_all_obstacles(display)
@@ -455,6 +513,9 @@ class FactoryLevel(State):
     ## DRAW METHODS
     # HUD and visual aids here:
     def draw_placement_preview(self, display):
+        if not self.machine_inventory.has(self.selected_entity):
+            return
+        
         if not self.machine_inventory.has(self.selected_entity):
             return
         
@@ -670,6 +731,7 @@ class FactoryLevel(State):
 
             y = start_y + i * (icon_size + padding)
             count = self.machine_inventory.get_count(entity_type)
+            count = self.machine_inventory.get_count(entity_type)
             owned = count > 0
 
             display_icon = icon.copy()
@@ -772,7 +834,9 @@ class FactoryLevel(State):
                     "direction": (entity.direction.x, entity.direction.y),
                 })
         return snapshot
-    
+
+    # one of the coolest thing I thought of
+    # a snapshot mechanic where it remembers and places prev machine placement 
     def restore_placed_machines(self, snapshot):
         if not snapshot:
             return
