@@ -1,6 +1,15 @@
 from .map import BaseMap
-from ..utils import WorldType, Layers
-from pygame import draw, Surface, SRCALPHA
+from ..utils import WorldType, Layers, EntityType
+from pygame import draw, Surface, SRCALPHA, Rect
+
+# entities the player should physically collide with
+SOLID_ENTITY_TYPES = {
+    EntityType.BUZZSAW,
+    EntityType.CRUSHER,
+    EntityType.FURNACE,
+    EntityType.WOOD_GENERATOR,
+    EntityType.STONE_GENERATOR,
+}
 
 class FactoryMap(BaseMap):
     def __init__(self, world):
@@ -12,6 +21,10 @@ class FactoryMap(BaseMap):
         self.tile_size = self.world.game.TILE_SIZE
         self.grid_width = self.cols * self.tile_size
         self.grid_height = self.rows * self.tile_size
+
+        self.obstacles = [
+            Rect(0, 288, 192, 96) # car obstacle
+        ]
 
         self.day_frames = self.world.game.assets[WorldType.FACTORY][Layers.FLOOR_0]
         self.background_pos = (0, 0)
@@ -44,7 +57,7 @@ class FactoryMap(BaseMap):
         if self.surface:
             display.blit(self.surface, (screen_x, screen_y))
 
-    def draw_day_frames(self, display, camera, progress):
+    def draw_day_frames(self, display, camera, progress):        
         progress = max(0.0, min(progress, 1.0))
 
         if progress <= 0.5:
@@ -80,3 +93,48 @@ class FactoryMap(BaseMap):
             self.origin_x + tile_x * self.tile_size,
             self.origin_y + tile_y * self.tile_size
         )
+
+    def resolve_collisions(self, player_rect, prev_rect):
+        feet_height = 8
+        feet_width_inset = 12
+
+        feet_rect = Rect(
+            player_rect.x + feet_width_inset,
+            player_rect.bottom - feet_height,
+            player_rect.width - feet_width_inset * 2,
+            feet_height
+        )
+        prev_feet_rect = Rect(
+            prev_rect.x + feet_width_inset,
+            prev_rect.bottom - feet_height,
+            prev_rect.width - feet_width_inset * 2,
+            feet_height
+        )
+
+        solids = list(self.obstacles)
+        for sprite in self.world.all_sprites:
+            if getattr(sprite, "entity_type", None) in SOLID_ENTITY_TYPES:
+                solids.append(sprite.rect)
+
+        for obstacle in solids:
+            if not feet_rect.colliderect(obstacle):
+                continue
+
+            test_x = Rect(feet_rect.x, prev_feet_rect.y, feet_rect.width, feet_rect.height)
+            if test_x.colliderect(obstacle):
+                if feet_rect.centerx < obstacle.centerx:
+                    feet_rect.right = obstacle.left
+                else:
+                    feet_rect.left = obstacle.right
+
+            test_y = Rect(feet_rect.x, feet_rect.y, feet_rect.width, feet_rect.height)
+            if test_y.colliderect(obstacle):
+                if feet_rect.centery < obstacle.centery:
+                    feet_rect.bottom = obstacle.top
+                else:
+                    feet_rect.top = obstacle.bottom
+
+        resolved = player_rect.copy()
+        resolved.x = feet_rect.x - feet_width_inset
+        resolved.y = feet_rect.y - (player_rect.height - feet_height)
+        return resolved
