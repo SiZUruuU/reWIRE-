@@ -151,7 +151,6 @@ class FactoryLevel(State):
             EntityType.WOOD_GENERATOR,
             EntityType.STONE_GENERATOR,
         ]
-        ]
 
         self.pickup_target = None
         self.pickup_progress = 0.0
