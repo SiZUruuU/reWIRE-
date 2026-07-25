@@ -22,14 +22,11 @@ class SellBox(MachineEntity):
         if not self.can_accept(resource, port):
             return False
 
-        # if there's a resource, get it's value and turn it to cash
         value = RESOURCE_DATA.get(resource.resource_type, {}).get("value", 0)
-        rounded_value = round(self.world.economy.cash + value, 5)
-        self.world.economy.cash = rounded_value
+        self.world.earned_cash_today = round(self.world.earned_cash_today + value, 5)
 
-        # as any machine entities, we must detach it from where it came
         resource.take_resource(self)
-        self.world.all_sprites.remove(resource) # item destroyed
+        self.world.all_sprites.remove(resource)
         return True
 
     def update(self, global_time, delta_time, actions):
