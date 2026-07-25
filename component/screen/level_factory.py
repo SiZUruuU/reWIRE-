@@ -11,8 +11,8 @@ from component.utils.audio import AudioComp
 from .economy import Economy
 
 # FACTORY LEVEL CONFIG
-DAY_DURATION = 180.0 # 3 minutes
-STARTING_QUOTA = 100
+DAY_DURATION = 50.0 # for testing
+STARTING_QUOTA = 10 # for testing
 PREP_STAGE_PICKUP_DURATION = 0.5
 DOOR_HOLD_DURATION = 3.0
 PICKUP_DURATIONS = {
@@ -26,7 +26,7 @@ PICKUP_DURATIONS = {
 
 # p.s for method explanations etc, check test world. Code here should be clean.
 class FactoryLevel(State):
-    def __init__(self, game, economy=None):
+    def __init__(self, game, economy=None, day_number=1, quota=None):
         super().__init__(game)
 
         # FACTORY WORLD CONFIG
@@ -52,7 +52,8 @@ class FactoryLevel(State):
 
         # should carry on to other levels that has economy
         self.economy = economy if economy is not None else Economy(starting_cash=0)
-        self.quota = STARTING_QUOTA # grows over days
+        self.day_number = day_number
+        self.quota = quota if quota is not None else STARTING_QUOTA
 
         self.all_sprites = pygame.sprite.LayeredUpdates()
         self.game = game
@@ -89,16 +90,25 @@ class FactoryLevel(State):
             EntityType.FURNACE,
             EntityType.WOOD_GENERATOR,
             EntityType.STONE_GENERATOR,
-        ]
+        ]        
+        self.machine_inventory = {
+            EntityType.CONVEYOR: 1,
+            EntityType.BUZZSAW: 1,
+            EntityType.CRUSHER: 1,
+            EntityType.FURNACE: 1,
+            EntityType.WOOD_GENERATOR: 1,
+            EntityType.STONE_GENERATOR: 1,
+        }
 
         self.pickup_target = None
         self.pickup_progress = 0.0
         self.pickup_required = 0.0
 
-        # stage tracking:
+        # stage tracking:        
         self.is_prep_stage = True   # level always opens in prep stage
         self.day_timer = 0.0
         self.day_ended = False
+        self.earned_cash_today = 0.0
 
         self.door_position = (24, 4)
         self.door_hold_progress = 0.0
@@ -116,13 +126,19 @@ class FactoryLevel(State):
     ## LOGIC METHODS ##
     def update(self, delta_time, actions):
         if not self.day_ended and not self.is_prep_stage and not self.day_over:
-            self.day_timer += delta_time*10
+            self.day_timer += delta_time
             if self.day_timer >= DAY_DURATION:
                 self.day_over = True
 
+        prev_rect = self.player.rect.copy()
         self.handle_inputs(actions)
         self.all_sprites.update(self.game.global_time, delta_time, actions)
         self.camera.scroll(delta_time)
+
+        # resolve player collision with obstacles
+        resolved = self.map.resolve_collisions(self.player.rect, prev_rect)
+        self.player.rect.topleft = resolved.topleft
+        self.player.position = pygame.Vector2(self.player.rect.topleft)        
 
     def handle_inputs(self, actions):
         mouse = get_world_mousePos(self.game, self.camera)
@@ -280,16 +296,31 @@ class FactoryLevel(State):
         self.day_over = False
         self.day_ended = True
         self.is_prep_stage = True
-        if self.economy.cash >= STARTING_QUOTA:
-            self.quota = round(self.quota + self.quota * 0.25, 5)
-            self.economy.cash = round(self.economy.cash - int(STARTING_QUOTA * 0.5), 5)
+
+        if self.earned_cash_today >= self.quota:
+            self.economy.add_cash(self.earned_cash_today)
+            self.economy.cash = round(self.economy.cash - self.quota * 0.5, 5)
+            self.quota = round(self.quota + self.economy.cash * 0.25 + self.quota * 0.25, 5)
+            self.day_number += 1
             self.on_day_won()
         else:
+            self.reset_progress()
             self.on_day_lost()
 
+        self.earned_cash_today = 0
+
     def on_day_won(self):
-        # TODO: transition to office level
-        pass
+        # local import
+        from .level_office import OfficeLevel
+        self.exit_state()
+        office = OfficeLevel(
+            self.game,
+            economy=self.economy,
+            day_number=self.day_number,
+            quota=self.quota,
+        )
+        office.enter_state()
+
 
     def on_day_lost(self):
         self.day_ended = False
@@ -300,6 +331,12 @@ class FactoryLevel(State):
 
     def start_stage_transition(self):
         self.is_prep_stage = False
+
+    def reset_progress(self):
+        self.economy.cash = 0
+        self.economy.resources = {}
+        self.quota = STARTING_QUOTA
+        self.day_number = 1    
 
     # (> w <)?
 
@@ -335,18 +372,25 @@ class FactoryLevel(State):
         self.draw_item_count(display)
         #self.draw_cash_display(display)
         self.draw_pickup_bar(display)
+
+        # HUD stuff
         self.draw_day_timer(display)
         self.draw_prep_text(display)
         self.draw_quota(display)
         self.draw_day_over_text(display)
         self.draw_door_prompt(display)
-        self.draw_door_debug(display)
+        self.draw_machine_inventory(display)
+        self.draw_day_counter(display)
+
+        # debugs
+        self.show_all_obstacles(display)
 
     @staticmethod
     def _lerp_color(c1, c2, t):
         return tuple(int(a + (b - a) * t) for a, b in zip(c1, c2))
 
     ## DRAW METHODS
+    # HUD and visual aids here:
     def draw_placement_preview(self, display):
         mouse = get_world_mousePos(self.game, self.camera)
         tile_x, tile_y = self.map.world_to_tile(mouse['world_x'], mouse['world_y'])
@@ -470,7 +514,7 @@ class FactoryLevel(State):
     def draw_quota(self, display):
         font = self.game.assets[Fonts.HEADER]
         text_1 = font.render("TODAY'S QUOTA", True, (255, 255, 255))
-        text_2 = font.render(f"${self.economy.cash} / ${self.quota}", True, (100, 255, 100))
+        text_2 = font.render(f"${self.earned_cash_today} / ${self.quota}", True, (100, 255, 100))
 
         padding = 8
         line_gap = 2
@@ -503,7 +547,7 @@ class FactoryLevel(State):
             return
         font = self.game.assets[Fonts.HEADER]
         text = font.render("DAY COMPLETE! head to the door", True, (255, 230, 120))
-        text_rect = text.get_rect(midtop=(self.game.GAME_WIDTH // 2, 10))
+        text_rect = text.get_rect(midtop=(self.game.GAME_WIDTH // 2, self.game.GAME_HEIGHT - 30))
         bg = pygame.Surface((text_rect.width + 20, text_rect.height + 10), pygame.SRCALPHA)
         bg.fill((0, 0, 0, 150))
         display.blit(bg, (text_rect.x - 10, text_rect.y - 5))
@@ -537,42 +581,94 @@ class FactoryLevel(State):
             pygame.draw.rect(display, (100, 255, 100), (bx, by, int(bar_w * ratio), bar_h))
             pygame.draw.rect(display, (10, 10, 10), (bx, by, bar_w, bar_h), 1)
 
+    def draw_machine_inventory(self, display):
+        icons = self.game.assets[Animation.ICONS]
+        font = self.game.assets[Fonts.BODY]
 
-    # debug
-    def draw_door_debug(self, display):
-        if self.debug_mode:
-            if self.door_position is None:
-                return
+        icon_size = 32
+        padding = 6
+        start_y = 60
+        x = self.game.GAME_WIDTH - icon_size - 16
 
-            tile_size = self.game.TILE_SIZE
-            door_x, door_y = self.door_position
+        # background
+        strip_padding = 4
+        strip_height = len(self.hotbar) * (icon_size + padding) - padding + strip_padding * 2
+        strip = pygame.Surface((icon_size + strip_padding * 2, strip_height), pygame.SRCALPHA)
+        strip.fill((0, 0, 0, 150))
+        display.blit(strip, (x - strip_padding, start_y - strip_padding))
+        
+        for i, entity_type in enumerate(self.hotbar):
+            icon = icons.get(entity_type)
+            if icon is None:
+                continue
 
-            # the door tile itself, in red
-            world_x, world_y = self.map.absolute_tile_to_world(door_x, door_y)
-            screen_x = world_x - self.camera.offset.x
-            screen_y = world_y - self.camera.offset.y
-            door_rect = pygame.Rect(screen_x, screen_y, tile_size, tile_size)
-            pygame.draw.rect(display, (255, 0, 0), door_rect, 2)
+            y = start_y + i * (icon_size + padding)
+            count = self.machine_inventory.get(entity_type, 0)
+            owned = count > 0
 
-            # the 3x3 trigger zone
-            for dx in (-1, 0, 1):
-                for dy in (-1, 0, 1):
-                    tx, ty = door_x + dx, door_y + dy
-                    wx, wy = self.map.absolute_tile_to_world(tx, ty)
-                    sx = wx - self.camera.offset.x
-                    sy = wy - self.camera.offset.y
-                    zone_rect = pygame.Rect(sx, sy, tile_size, tile_size)
-                    pygame.draw.rect(display, (255, 255, 0), zone_rect, 1)
+            display_icon = icon.copy()
+            if not owned:
+                dark = pygame.Surface(display_icon.get_size(), pygame.SRCALPHA)
+                dark.fill((60, 60, 60, 255))
+                display_icon.blit(dark, (0, 0), special_flags=pygame.BLEND_RGB_MULT)
+                display_icon.set_alpha(160)
 
-            # player's current tile relative to the zone
-            player_tile_x, player_tile_y = self.map.world_to_absolute_tile(self.player.rect.centerx, self.player.rect.centery)
-            pwx, pwy = self.map.absolute_tile_to_world(player_tile_x, player_tile_y)
-            psx = pwx - self.camera.offset.x
-            psy = pwy - self.camera.offset.y
-            pygame.draw.rect(display, (0, 255, 255), (psx, psy, tile_size, tile_size), 2)
+            # highlight if currently selected
+            if self.selected_entity == entity_type:
+                highlight_rect = pygame.Rect(x - 4, y - 4, icon_size + 8, icon_size + 8)
+                pygame.draw.rect(display, (255, 230, 120), highlight_rect, 2)
 
-            # print actual distance check
-            font = self.game.assets[Fonts.BODY]
-            near = getattr(self, "is_near_door", False)
-            text = font.render(f"near_door={near} day_over={self.day_over} hold={self.door_hold_progress:.2f}", True, (255, 255, 255))
-            display.blit(text, (10, self.game.GAME_HEIGHT - 30))
+            display.blit(display_icon, (x, y))
+
+            # hotkey number
+            key_text = font.render(str(i + 1), True, (50, 50, 80))
+            key_rect = key_text.get_rect(topleft=(x + 2, y + 1))
+
+            key_bg = pygame.Surface((key_text.get_width() + 4, key_text.get_height() + 2), pygame.SRCALPHA)
+            key_bg.fill((0, 0, 0, 170))
+            display.blit(key_bg, (key_rect.x - 2, key_rect.y - 1))
+            display.blit(key_text, key_rect)
+
+            # counter for amount of machines
+            text = font.render(str(count), True, (255, 255, 255))
+            text_rect = text.get_rect(bottomright=(x + icon_size - 2, y + icon_size - 2))
+
+            bg = pygame.Surface((text_rect.width + 4, text_rect.height + 2), pygame.SRCALPHA)
+            bg.fill((0, 0, 0, 150))
+            display.blit(bg, (text_rect.x - 2, text_rect.y - 1))
+            display.blit(text, text_rect)
+
+    def draw_day_counter(self, display):
+        font = self.game.assets[Fonts.HEADER]
+        text = font.render(f"DAY {self.day_number}", True, (255, 255, 255))
+        display.blit(text, (self.game.GAME_WIDTH // 2 - text.get_width() // 2, 10))
+
+    # for debugging
+    def show_all_obstacles(self, display):
+        if not self.debug_mode:
+            return
+
+        # static obstacles (these are dev defined obstacles)
+        for obstacle in self.map.obstacles:
+            screen_x = obstacle.x - self.camera.offset.x
+            screen_y = obstacle.y - self.camera.offset.y
+            rect = pygame.Rect(screen_x, screen_y, obstacle.width, obstacle.height)
+            pygame.draw.rect(display, (255, 0, 255), rect, 2)
+
+        # solid machine sprites
+        from ..map.factory_map import SOLID_ENTITY_TYPES # local import
+        for sprite in self.all_sprites:
+            if getattr(sprite, "entity_type", None) in SOLID_ENTITY_TYPES:
+                screen_x = sprite.rect.x - self.camera.offset.x
+                screen_y = sprite.rect.y - self.camera.offset.y
+                rect = pygame.Rect(screen_x, screen_y, sprite.rect.width, sprite.rect.height)
+                pygame.draw.rect(display, (255, 0, 255), rect, 2)
+
+        # player's mmmmmm feet collision box
+        feet_height = 16
+        feet_width_inset = 12
+        feet_x = self.player.rect.x + feet_width_inset - self.camera.offset.x
+        feet_y = self.player.rect.bottom - feet_height - self.camera.offset.y
+        feet_width = self.player.rect.width - feet_width_inset * 2
+        feet_rect = pygame.Rect(feet_x, feet_y, feet_width, feet_height)
+        pygame.draw.rect(display, (0, 255, 0), feet_rect, 2)
