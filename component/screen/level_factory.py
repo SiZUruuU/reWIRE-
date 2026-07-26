@@ -11,6 +11,7 @@ from component.utils.audio import AudioComp
 from .economy import Economy
 from .machine_inventory import MachineInventory
 from .gui.rewire_gui import RewireGUI
+from .gui.manual_gui import ManualGUI
 
 # FACTORY LEVEL CONFIG
 DAY_DURATION = 180  # 3 mins
@@ -63,6 +64,7 @@ class FactoryLevel(State):
         self.quota = quota if quota is not None else STARTING_QUOTA
 
         self.rewire_gui = RewireGUI(self)
+        self.manual_gui = ManualGUI(self)
 
         # apply starter kit
         if machine_inventory is not None:
@@ -199,7 +201,7 @@ class FactoryLevel(State):
                 self.dir_index += 1
             self.dir_index %= 4
             self.direction = self.directions[self.dir_index]
-            self.game.reset_key("key_r")
+            self.game.reset_key("key_r")        
 
         # placing down machines
         if actions["LMB"] and self.selected_entity != EntityType.NONE:
@@ -209,6 +211,14 @@ class FactoryLevel(State):
                 if placed is True:
                     self.machine_inventory.remove(self.selected_entity)
             self.game.reset_key("LMB")
+
+        # for manual activation
+        if actions["key_g"]:
+            self.manual_gui.toggle()
+            self.game.reset_key("key_g")
+
+        if self.manual_gui.is_open:
+            self.manual_gui.handle_input(actions)
 
         # for the machine removal feature
         self.handle_pickup(actions, tile_x, tile_y)
@@ -428,9 +438,10 @@ class FactoryLevel(State):
         self.draw_machine_inventory(display)
         self.draw_day_counter(display)
         self.draw_broken_indicators(display)
-        self.draw_rewire_prompt(display)
+        self.draw_rewire_prompt(display)        
 
         self.rewire_gui.draw(display)
+        self.manual_gui.draw(display)
 
         # debugs
         self.show_all_obstacles(display)
