@@ -1,6 +1,7 @@
 from ...utils import EntityType, ResourceType
 from .machine import MachineEntity
 from ..resources.resource_data import RESOURCE_DATA
+from pygame import Vector2
 
 # This class should not be treated as a machine despite being a child class of
 # MachineEntity, placed only by us devs to the world/level's designated selling area
@@ -26,7 +27,7 @@ class SellBox(MachineEntity):
         self.world.earned_cash_today = round(self.world.earned_cash_today + value, 5)
 
         self.world.particles.emit_burst(
-            resource.position,
+            self.position + Vector2(16, 16),
             color=(80, 220, 100),
             count=14,
             size_range=(2, 5),
