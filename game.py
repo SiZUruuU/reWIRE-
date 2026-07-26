@@ -442,7 +442,7 @@ class Game:
             EntityType.FURNACE : machine_blueprint_icons[3],
             EntityType.WOOD_GENERATOR : machine_blueprint_icons[4],
             EntityType.STONE_GENERATOR : machine_blueprint_icons[5]
-        }
+        }        
 
         # resource currency icon
         resource_icons = self.load_frames(
@@ -462,6 +462,11 @@ class Game:
         # workshop panel rect
         workshop_panel = self.load_frame(os.path.join(self.sprite_dir, "workshop_panel.png"))
         self.assets[Animation.WORKSHOP_PANEL] = workshop_panel
+
+        # rewire box minigame panel
+        # connect the dots
+        rewire_box_dots = self.load_frame(os.path.join(self.sprite_dir, "rewire_box_01.png"))
+        self.assets[Animation.REWIRE_BOX_PANEL] = rewire_box_dots
 
     # helper method for loading assets:
     def load_frames(self, filename, x, y, width, height, amount):
