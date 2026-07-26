@@ -1,4 +1,4 @@
-import pygame, random
+import pygame, random, math
 
 from .states import State
 from ..map.factory_map import FactoryMap
@@ -101,7 +101,11 @@ class FactoryLevel(State):
                 EntityType.SELLBOX
             )
 
+        self.tutorial_seen = True
+        self.manual_hint_seen = True
+
         if day_number == 1 and placed_machines is None:
+
             self.map.place_entity(
                 pygame.Vector2(6, 4),
                 self.directions[0],
@@ -112,6 +116,9 @@ class FactoryLevel(State):
                 self.directions[0],
                 EntityType.BUZZSAW
             )
+
+        self.tutorial_seen = False
+        self.manual_hint_seen = False
 
         self.dir_index = 0
         self.direction = self.directions[0]
@@ -149,8 +156,9 @@ class FactoryLevel(State):
         self.restore_placed_machines(placed_machines)
 
         self.debug_mode = False
-
-        AudioComp.play_ost(self, AudioType.OST, OST.TITLE)
+        
+        # SOUNDS
+        #AudioComp.play_ost(self, AudioType.OST, OST.TITLE)
 
     ## LOGIC METHODS ##
     def update(self, delta_time, actions):
@@ -215,6 +223,7 @@ class FactoryLevel(State):
         # for manual activation
         if actions["key_g"]:
             self.manual_gui.toggle()
+            self.manual_hint_seen = True
             self.game.reset_key("key_g")
 
         if self.manual_gui.is_open:
@@ -428,6 +437,7 @@ class FactoryLevel(State):
         self.draw_item_count(display)
         #self.draw_cash_display(display)
         self.draw_pickup_bar(display)
+        self.draw_manual_hint(display)
 
         # HUD stuff
         self.draw_day_timer(display)
@@ -563,12 +573,23 @@ class FactoryLevel(State):
     def draw_prep_text(self, display):
         if not self.is_prep_stage:
             return
+
+        duration = 3.0
+        phase = (self.game.global_time / duration) * (2 * math.pi)
+        weight = (math.sin (phase) + 1.0) / 2.0
+
+        text_alpha = int(pygame.math.lerp(0, 255, weight))
+        bg_alpha = int(pygame.math.lerp(0, 150, weight))
+
         font = self.game.assets[Fonts.BODY]
         text = font.render("PREP STAGE - Press 'ENTER' to start day", True, (255, 230, 120))
+        text.set_alpha(text_alpha)
+
         text_rect = text.get_rect(midbottom=(self.game.GAME_WIDTH // 2, self.game.GAME_HEIGHT - 30))
 
         bg = pygame.Surface((text_rect.width + 20, text_rect.height + 10), pygame.SRCALPHA)
-        bg.fill((0, 0, 0, 150))
+        bg.fill((0, 0, 0, bg_alpha))
+
         display.blit(bg, (text_rect.x - 10, text_rect.y - 5))
         display.blit(text, text_rect)
 
@@ -801,6 +822,19 @@ class FactoryLevel(State):
                 speed_range=(50, 200),
                 lifetime_range=(0.15, 2)
             )
+
+    def draw_manual_hint(self, display):
+        if self.manual_hint_seen or self.manual_gui.is_open:
+            return
+        font = self.game.assets[Fonts.BODY]
+        text = font.render('Press "G" to open the manual', True, (200, 200, 220))
+        text_rect = text.get_rect(center=(self.game.GAME_WIDTH/2, 50))
+
+        bg = pygame.Surface((text_rect.width + 16, text_rect.height + 10), pygame.SRCALPHA)
+        bg.fill((0, 0, 0, 150))
+        display.blit(bg, (text_rect.x - 8, text_rect.y - 5))
+        display.blit(text, text_rect)
+
 
 
     # for debugging
