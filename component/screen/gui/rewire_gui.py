@@ -1,60 +1,58 @@
 import pygame
 import random
-from ...utils import get_scaled_mouse_pos, Fonts, EntityType
-
-REWIRE_COLOR_POOL = [
-    (220, 60, 60), # red
-    (60, 200, 90), # green
-    (60, 120, 220), # blue
-    (230, 200, 60), # yellow
-    (200, 90, 220), # magenta
-    (60, 200, 200), # cyan
-    (240, 140, 40), # orange
-    (140, 90, 220), # purple
-    (150, 220, 60), # lime
-    (220, 60, 140), # pink
-    (100, 100, 100), # grey
-    (255, 255, 255), # white
-]
+from ...utils import get_scaled_mouse_pos, Fonts, EntityType, Animation
 
 REWIRE_NODE_COUNTS = {
     EntityType.CONVEYOR: 3,
-    EntityType.BUZZSAW: 3,
-    EntityType.CRUSHER: 5,
-    EntityType.FURNACE: 6,
-    EntityType.WOOD_GENERATOR: 8,
-    EntityType.STONE_GENERATOR: 10,
+    EntityType.BUZZSAW: 4,
+    EntityType.CRUSHER: 4,
+    EntityType.FURNACE: 5,
+    EntityType.WOOD_GENERATOR: 6,
+    EntityType.STONE_GENERATOR: 8,
 }
 
-REWIRE_PANEL_SIZE = (300, 220)
-REWIRE_TERMINAL_RADIUS = 10
-REWIRE_LEFT_X = 60
-REWIRE_RIGHT_X = 240
-REWIRE_TOP_Y = 50
-REWIRE_SPACING = 40
+REWIRE_COLOR_POOL = [
+    (220, 60, 60), 
+    (60, 200, 90), 
+    (60, 120, 220), 
+    (230, 200, 60),
+    (200, 90, 220), 
+    (60, 200, 200), 
+    (240, 140, 40), 
+    (140, 90, 220),
+    (150, 220, 60), 
+    (220, 60, 140), 
+    (100, 100, 100), 
+    (255, 255, 255),
+]
 
+REWIRE_PANEL_SIZE = (400, 300)
+REWIRE_BATCH_SIZE = 6
+REWIRE_NODE_RADIUS = 7
 
-REWIRE_PANEL_SIZE = (340, 400)
-REWIRE_TERMINAL_RADIUS = 9
-REWIRE_LEFT_X = 60
-REWIRE_RIGHT_X = 280
-REWIRE_TOP_Y = 60
-# spacing is automatic ;3
-REWIRE_SPACING = 26
+# hard coded area based off of my calculation
+# no one speaks about this
+REWIRE_NODE_A_AREA = (112, 80, 16, 144)
+REWIRE_NODE_B_AREA = (284, 96, 16, 130)
+
+REWIRE_BATCH_ADVANCE_DELAY = 0.5
 
 
 class RewireGUI:
-    def __init__(self, world):
-        self.world = world
-        self.game = world.game
+    def __init__(self, level):
+        self.level = level
+        self.game = level.game
         self.active_machine = None
         self.node_count = 0
-        self.right_order = []
+        # batches are the list of colors
+        self.batches = []
+        self.current_batch_index = 0 # current color
+        self.right_order = []        
         self.connected = set()
+        self.advance_timer = 0.0
 
-        # drag state
-        self.dragging_from = None # index of left node being dragged, or None
-        self.drag_pos = None # current mouse pos while dragging
+        self.dragging_from = None
+        self.drag_pos = None
 
     @property
     def is_open(self):
@@ -63,9 +61,21 @@ class RewireGUI:
     def open(self, machine):
         self.active_machine = machine
         self.node_count = REWIRE_NODE_COUNTS.get(machine.entity_type, 6)
-        self.right_order = list(range(self.node_count))
-        random.shuffle(self.right_order)
+
+        all_indices = list(range(self.node_count))
+        self.batches = [
+            all_indices[i:i + REWIRE_BATCH_SIZE]
+            for i in range(0, self.node_count, REWIRE_BATCH_SIZE)
+        ]
+        self.current_batch_index = 0
         self.connected = set()
+        self.advance_timer = 0.0
+        self._start_batch()
+
+    def _start_batch(self):
+        current = self.batches[self.current_batch_index]
+        self.right_order = list(current)
+        random.shuffle(self.right_order)
         self.dragging_from = None
         self.drag_pos = None
 
@@ -79,100 +89,113 @@ class RewireGUI:
             *REWIRE_PANEL_SIZE
         )
 
-        # fit spacing to available vertical room based on node count
-        available_height = REWIRE_PANEL_SIZE[1] - REWIRE_TOP_Y - 40
-        spacing = min(REWIRE_SPACING, available_height / max(self.node_count - 1, 1))
+        current = self.batches[self.current_batch_index]
+        n = len(current)
 
-        left_points, right_points = [], []
-        for i in range(self.node_count):
-            ly = panel.y + REWIRE_TOP_Y + i * spacing
-            left_points.append((panel.x + REWIRE_LEFT_X, ly))
-            right_points.append((panel.x + REWIRE_RIGHT_X, ly))
+        ax, ay, aw, ah = REWIRE_NODE_A_AREA
+        bx, by, bw, bh = REWIRE_NODE_B_AREA
+
+        a_spacing = ah / max(n - 1, 1)
+        b_spacing = bh / max(n - 1, 1)
+
+        left_points = {}
+        right_points = {}
+        for i, color_index in enumerate(current):
+            left_points[color_index] = (panel.x + ax + aw // 2, panel.y + ay + i * a_spacing)
+        for slot_index, color_index in enumerate(self.right_order):
+            right_points[color_index] = (panel.x + bx + bw // 2, panel.y + by + slot_index * b_spacing)
+
         return panel, left_points, right_points
 
-    # drag to connect minigame input
-    def handle_input(self, actions):
+    ## hold and drag logic
+    def handle_input(self, actions, delta_time=0.0):
         if not self.is_open:
+            return
+
+        if self.advance_timer > 0:
+            self.advance_timer -= delta_time
+            if self.advance_timer <= 0:
+                self._advance_or_finish()
             return
 
         mx, my = get_scaled_mouse_pos(self.game)
         panel, left_points, right_points = self.get_layout()
-
         mouse_down = actions["LMB"]
 
         if self.dragging_from is None:
             if mouse_down:
-                for i, (lx, ly) in enumerate(left_points):
-                    if i in self.connected:
+                for color_index, (lx, ly) in left_points.items():
+                    if color_index in self.connected:
                         continue
-                    if (mx - lx) ** 2 + (my - ly) ** 2 <= REWIRE_TERMINAL_RADIUS ** 2:
-                        self.dragging_from = i
+                    if (mx - lx) ** 2 + (my - ly) ** 2 <= REWIRE_NODE_RADIUS ** 2:
+                        self.dragging_from = color_index
                         self.drag_pos = (mx, my)
                         return
         else:
             self.drag_pos = (mx, my)
             if not mouse_down:
-                # check if on top of a valid node
-                for slot_index, (rx, ry) in enumerate(right_points):
-                    color_index = self.right_order[slot_index]
+                for color_index, (rx, ry) in right_points.items():
                     if color_index in self.connected:
                         continue
-                    if (mx - rx) ** 2 + (my - ry) ** 2 <= REWIRE_TERMINAL_RADIUS ** 2:
+                    if (mx - rx) ** 2 + (my - ry) ** 2 <= REWIRE_NODE_RADIUS ** 2:
                         if color_index == self.dragging_from:
                             self.connected.add(color_index)
-                            if len(self.connected) == self.node_count:
-                                self.complete_rewire()
+                            current = self.batches[self.current_batch_index]
+                            if all(c in self.connected for c in current):
+                                self.advance_timer = REWIRE_BATCH_ADVANCE_DELAY
                         break
                 self.dragging_from = None
                 self.drag_pos = None
+
+    def _advance_or_finish(self):
+        if self.current_batch_index + 1 < len(self.batches):
+            self.current_batch_index += 1
+            self._start_batch()
+        else:
+            self.complete_rewire()
 
     def complete_rewire(self):
         if self.active_machine is not None and hasattr(self.active_machine, "breakdown"):
             self.active_machine.breakdown.repair()
         self.close()
 
-    ## DRAW ##
+    ## draw method
     def draw(self, display):
         if not self.is_open:
             return
         panel, left_points, right_points = self.get_layout()
         font = self.game.assets[Fonts.BODY]
 
-        bg = pygame.Surface(panel.size, pygame.SRCALPHA)
-        bg.fill((20, 20, 30, 235))
-        display.blit(bg, panel.topleft)
+        display.blit(self.game.assets[Animation.REWIRE_BOX_PANEL], panel.topleft)
         pygame.draw.rect(display, (255, 255, 255), panel, 1)
 
-        title = font.render(f"REWIRE ({len(self.connected)}/{self.node_count})", True, (255, 255, 255))
-        display.blit(title, (panel.x + 16, panel.y + 16))
+        batch_label = f"Batch {self.current_batch_index + 1}/{len(self.batches)}  ({len(self.connected)}/{self.node_count})"
+        text = font.render(batch_label, True, (255, 255, 255))
+        display.blit(text, (panel.x + 8, panel.y + 6))
 
-        for i, (lx, ly) in enumerate(left_points):
-            color = REWIRE_COLOR_POOL[i]
-            pygame.draw.circle(display, color, (lx, ly), REWIRE_TERMINAL_RADIUS)
-            if i in self.connected:
-                pygame.draw.circle(display, (255, 255, 255), (lx, ly), REWIRE_TERMINAL_RADIUS, 2)
+        current = self.batches[self.current_batch_index]
 
-        for slot_index, (rx, ry) in enumerate(right_points):
-            color_index = self.right_order[slot_index]
+        for color_index in current:
+            lx, ly = left_points[color_index]
             color = REWIRE_COLOR_POOL[color_index]
-            pygame.draw.circle(display, color, (rx, ry), REWIRE_TERMINAL_RADIUS)
+            pygame.draw.circle(display, color, (lx, ly), REWIRE_NODE_RADIUS)
             if color_index in self.connected:
-                pygame.draw.circle(display, (255, 255, 255), (rx, ry), REWIRE_TERMINAL_RADIUS, 2)
+                pygame.draw.circle(display, (255, 255, 255), (lx, ly), REWIRE_NODE_RADIUS, 2)
 
-        # completed wires
-        for color_index in self.connected:
-            left_pos = left_points[color_index]
-            right_slot = self.right_order.index(color_index)
-            right_pos = right_points[right_slot]
-            pygame.draw.line(display, REWIRE_COLOR_POOL[color_index], left_pos, right_pos, 3)
+        for color_index in current:
+            rx, ry = right_points[color_index]
+            color = REWIRE_COLOR_POOL[color_index]
+            pygame.draw.circle(display, color, (rx, ry), REWIRE_NODE_RADIUS)
+            if color_index in self.connected:
+                pygame.draw.circle(display, (255, 255, 255), (rx, ry), REWIRE_NODE_RADIUS, 2)
 
-        # drag line following the cursor
+        for color_index in current:
+            if color_index in self.connected:
+                pygame.draw.line(display, REWIRE_COLOR_POOL[color_index], left_points[color_index], right_points[color_index], 3)
+
         if self.dragging_from is not None and self.drag_pos is not None:
-            pygame.draw.line(
-                display, REWIRE_COLOR_POOL[self.dragging_from],
-                left_points[self.dragging_from], self.drag_pos, 3
-            )
+            pygame.draw.line(display, REWIRE_COLOR_POOL[self.dragging_from], left_points[self.dragging_from], self.drag_pos, 3)
 
-        if len(self.connected) == self.node_count:
+        if self.advance_timer > 0 and len(self.connected) == self.node_count:
             done_text = font.render("FIXED!", True, (100, 255, 100))
-            display.blit(done_text, (panel.centerx - done_text.get_width() // 2, panel.bottom - 30))
+            display.blit(done_text, (panel.centerx - done_text.get_width() // 2, panel.bottom - 20))
