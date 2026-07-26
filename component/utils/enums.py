@@ -88,6 +88,7 @@ class Animation(Enum):
     RESOURCE_ICONS = auto()
     SHOP_PANEL = auto()
     WORKSHOP_PANEL = auto()
+    REWIRE_BOX_PANEL = auto()
 
 class Fonts(Enum):
     TITLE = auto()
