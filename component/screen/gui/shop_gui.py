@@ -1,5 +1,5 @@
 import pygame
-from ...entity import SHOP_PRICES, MACHINE_RECIPES
+from ...entity import SHOP_PRICES
 from ...utils import get_scaled_mouse_pos, Fonts, Animation
 
 SHOP_PANEL_SIZE = (576, 288)

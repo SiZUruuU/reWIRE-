@@ -15,7 +15,7 @@ from .gui.manual_gui import ManualGUI
 
 # FACTORY LEVEL CONFIG
 DAY_DURATION = 180  # 3 mins
-STARTING_QUOTA = 25.65
+STARTING_QUOTA = round(random.uniform(20, 30), 2)
 PREP_STAGE_PICKUP_DURATION = 0.5
 DOOR_HOLD_DURATION = 3.0
 SPARK_INTERVAL = 0.15
@@ -379,23 +379,28 @@ class FactoryLevel(State):
 
     def on_day_won(self):
         from .level_office import OfficeLevel
-        self.exit_state()
-        office = OfficeLevel(
-            self.game,
-            economy=self.economy,
-            day_number=self.day_number,
-            quota=self.quota,
-            machine_inventory=self.machine_inventory,
-            placed_machines=self.snapshot_placed_machines(),
-        )
-        office.enter_state()
+        def do_transition():
+            self.exit_state()
+            office = OfficeLevel(
+                self.game,
+                economy=self.economy,
+                day_number=self.day_number,
+                quota=self.quota,
+                machine_inventory=self.machine_inventory,
+                placed_machines=self.snapshot_placed_machines(),
+            )
+            office.enter_state()
+        self.game.fade_trans.start(do_transition)
 
     def on_day_lost(self):
         self.day_ended = False
         self.is_prep_stage = True
         self.day_timer = 0.0
-        lose_screen = LoseScreen(self.game)
-        lose_screen.enter_state()
+
+        def do_transition():
+            lose_screen = LoseScreen(self.game)
+            lose_screen.enter_state()
+        self.game.fade_trans.start(do_transition)
 
     def start_stage_transition(self):
         self.is_prep_stage = False

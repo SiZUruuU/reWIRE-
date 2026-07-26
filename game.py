@@ -3,6 +3,7 @@ from component.screen.title_screen import TitleScreen
 from component.utils import EntityType, Animation, Direction, Fonts, ResourceType, WorldType, Layers
 from component.utils.enums import AudioType, OST, SFX
 from component.utils.audio import AudioComp
+from component.screen.fade_effect import FadeTransition
 
 class Game:
     def __init__(self):
@@ -80,6 +81,9 @@ class Game:
         self.load_assets()
         # load states to stack, must be in order
         self.load_states()
+
+        self.fade_trans = FadeTransition(self, duration=3.0)
+
         AudioComp(self)
 
     # main game loop
@@ -199,14 +203,20 @@ class Game:
 
     # global update loop
     def update(self):
-        self.global_time = pygame.time.get_ticks() / 1000.0 # convert to seconds
-        # peek the top and update
-        self.state_stack[-1].update(self.delta_time, self.action_keys)
+        self.global_time = pygame.time.get_ticks() / 1000.0
+
+        self.fade_trans.update(self.delta_time)
+
+        if not self.fade_trans.is_active:
+            self.state_stack[-1].update(self.delta_time, self.action_keys)
 
     # global render loop
     def render(self):
         # RENDER
         self.state_stack[-1].render(self.game_canvas)
+
+        # fade that dude real quick
+        self.fade_trans.draw(self.game_canvas)
 
         # upscale the game world to the screen dimensions
         self.screen.blit(pygame.transform.scale(self.game_canvas, (self.SCREEN_WIDTH, self.SCREEN_HEIGHT)), (0, 0))        
@@ -472,6 +482,17 @@ class Game:
         # rewire box minigame panel, connect the dots
         rewire_box_dots = self.load_frame(os.path.join(self.sprite_dir, "rewire_box_01.png"))
         self.assets[Animation.REWIRE_BOX_PANEL] = rewire_box_dots
+
+        # title screen images
+        title_screen_foreground = self.load_frame(os.path.join(self.sprite_dir, "titlescreen_foreground.png"))
+        title_screen_middleground = self.load_frame(os.path.join(self.sprite_dir, "titlescreen_jerry.png"))
+        title_screen_background = self.load_frame(os.path.join(self.sprite_dir, "titlescreen_background.png"))
+
+        self.assets[Animation.TITLE_SCREEN] = {
+            Layers.FLOOR_0 : title_screen_background,
+            Layers.MIDDLE_0 : title_screen_middleground,
+            Layers.FRONT_0 : title_screen_foreground
+        }
 
     # helper method for loading assets:
     def load_frames(self, filename, x, y, width, height, amount):

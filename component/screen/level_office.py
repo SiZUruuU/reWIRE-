@@ -117,17 +117,18 @@ class OfficeLevel(State):
 
     def next_day(self):
         from .level_factory import FactoryLevel
-        self.exit_state()
-        factory = FactoryLevel(
-            self.game,
-            economy=self.economy,
-            day_number=self.day_number,
-            quota=self.quota,
-            machine_inventory=self.machine_inventory,
-            placed_machines=self.placed_machines,
-        )
-        factory.enter_state()
-
+        def do_transition():
+            self.exit_state()
+            factory = FactoryLevel(
+                self.game,
+                economy=self.economy,
+                day_number=self.day_number,
+                quota=self.quota,
+                machine_inventory=self.machine_inventory,
+                placed_machines=self.placed_machines,
+            )
+            factory.enter_state()
+        self.game.fade_trans.start(do_transition)
 
 
     ## DESK (shop) ##
