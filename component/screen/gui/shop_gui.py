@@ -184,10 +184,10 @@ class ShopGUI:
                 pygame.draw.rect(display, SHOP_COLOR_FALLBACK_ICON, row["icon_rect"])
                 pygame.draw.rect(display, SHOP_COLOR_FALLBACK_ICON_BORDER, row["icon_rect"], 1)
 
-            label = font.render(f"{rt.name} (${SHOP_PRICES[rt]})", True, SHOP_COLOR_SCREEN_LABEL)
+            label = font.render(f"{rt.name} (${SHOP_PRICES[rt]})", False, SHOP_COLOR_SCREEN_LABEL)
             display.blit(label, row["label_pos"])
 
-            owned = font.render(f"owned: {economy.get_resource_count(rt)}", True, SHOP_COLOR_SCREEN_OWNED)
+            owned = font.render(f"owned: {economy.get_resource_count(rt)}", False, SHOP_COLOR_SCREEN_OWNED)
             display.blit(owned, row["owned_pos"])
 
             self._draw_triangle_button(display, row["dec_rect"], "left")
@@ -195,28 +195,28 @@ class ShopGUI:
             self._draw_amount_button(display, row["inc5_rect"], "5")
             self._draw_amount_button(display, row["inc10_rect"], "10")
 
-        cash_text = font.render(f"Cash: ${economy.cash}", True, SHOP_COLOR_SCREEN_CASH)
+        cash_text = font.render(f"Cash: ${economy.cash}", False, SHOP_COLOR_SCREEN_CASH)
         display.blit(cash_text, (panel.x + SHOP_CASH_HEADER_POS[0], panel.y + SHOP_CASH_HEADER_POS[1]))
 
         cart_x, cart_y = layout["cart_start"]
         if not self.cart:
-            empty_text = font.render("(empty)", True, SHOP_COLOR_SCREEN_CART_EMPTY)
+            empty_text = font.render("(empty)", False, SHOP_COLOR_SCREEN_CART_EMPTY)
             display.blit(empty_text, (cart_x, cart_y))
         else:
             for rt, amt in self.cart.items():
-                line = font.render(f"{rt.name}   x{amt}", True, SHOP_COLOR_SCREEN_CART_ITEM)
+                line = font.render(f"{rt.name}   x{amt}", False, SHOP_COLOR_SCREEN_CART_ITEM)
                 display.blit(line, (cart_x, cart_y))
                 cart_y += SHOP_CART_LINE_HEIGHT
 
         pygame.draw.rect(display, SHOP_COLOR_BEZEL_CLOSE, layout["close_rect"])
-        x_text = font.render("X", True, SHOP_COLOR_BEZEL_CLOSE_TEXT)
+        x_text = font.render("X", False, SHOP_COLOR_BEZEL_CLOSE_TEXT)
         display.blit(x_text, x_text.get_rect(center=layout["close_rect"].center))
 
         total_cost = sum(SHOP_PRICES[rt] * amt for rt, amt in self.cart.items())
         can_buy = total_cost > 0 and economy.cash >= total_cost
         buy_color = SHOP_COLOR_BEZEL_BUY_ENABLED if can_buy else SHOP_COLOR_BEZEL_BUY_DISABLED
         pygame.draw.rect(display, buy_color, layout["buy_rect"])
-        buy_text = font.render(f"BUY (${total_cost})", True, SHOP_COLOR_BEZEL_BUY_TEXT)
+        buy_text = font.render(f"BUY (${total_cost})", False, SHOP_COLOR_BEZEL_BUY_TEXT)
         display.blit(buy_text, buy_text.get_rect(center=layout["buy_rect"].center))
 
     def _draw_triangle_button(self, display, rect, direction):

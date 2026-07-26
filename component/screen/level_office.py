@@ -253,7 +253,7 @@ class OfficeLevel(State):
             icon_w = icon.get_width() if icon is not None else 20
             icon_h = icon.get_height() if icon is not None else 20
 
-            text = font.render(str(count), True, (100, 255, 100))
+            text = font.render(str(count), True, (100, 100, 100))
             text_h = text.get_height()
 
             row_h = max(icon_h, text_h)

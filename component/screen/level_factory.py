@@ -540,7 +540,7 @@ class FactoryLevel(State):
 
     def draw_cash_display(self, display):
         font = self.game.assets[Fonts.HEADER]
-        text = font.render(f"${self.economy.cash}", True, (100, 255, 100))
+        text = font.render(f"${self.economy.cash}", False, (100, 255, 100))
         text_rect = text.get_rect(topleft=(10, 10))
         bg = pygame.Surface((text_rect.width + 16, text_rect.height + 10), pygame.SRCALPHA)
         bg.fill((0, 0, 0, 150))
@@ -564,7 +564,7 @@ class FactoryLevel(State):
         font = self.game.assets[Fonts.HEADER]
         remaining = max(0, DAY_DURATION - self.day_timer)
         if self.is_prep_stage:
-            text = font.render(f"PREPARATORY", True, (255, 255, 255))
+            text = font.render(f"PREPARATORY", False, (255, 255, 255))
             display.blit(text, (self.game.GAME_WIDTH - 120, 10))
         else:
             text = font.render(f"TIME: {int(remaining)}", True, (255, 255, 255))
@@ -582,7 +582,7 @@ class FactoryLevel(State):
         bg_alpha = int(pygame.math.lerp(0, 150, weight))
 
         font = self.game.assets[Fonts.BODY]
-        text = font.render("PREP STAGE - Press 'ENTER' to start day", True, (255, 230, 120))
+        text = font.render("PREP STAGE - Press 'ENTER' to start day", False, (255, 230, 120))
         text.set_alpha(text_alpha)
 
         text_rect = text.get_rect(midbottom=(self.game.GAME_WIDTH // 2, self.game.GAME_HEIGHT - 30))
@@ -628,7 +628,7 @@ class FactoryLevel(State):
         if not self.day_over:
             return
         font = self.game.assets[Fonts.HEADER]
-        text = font.render("DAY COMPLETE! head to the door", True, (255, 230, 120))
+        text = font.render("DAY COMPLETE! head to the door", False, (255, 230, 120))
         text_rect = text.get_rect(midtop=(self.game.GAME_WIDTH // 2, self.game.GAME_HEIGHT - 30))
         bg = pygame.Surface((text_rect.width + 20, text_rect.height + 10), pygame.SRCALPHA)
         bg.fill((0, 0, 0, 150))
@@ -645,7 +645,7 @@ class FactoryLevel(State):
         screen_y = world_y - self.camera.offset.y - 30
 
         font = self.game.assets[Fonts.BODY]
-        text = font.render("Hold 'E'", True, (255, 230, 120))
+        text = font.render("Hold 'E'", False, (255, 230, 120))
         text_rect = text.get_rect(center=(screen_x + tile_size // 2, screen_y))
 
         bg = pygame.Surface((text_rect.width + 12, text_rect.height + 6), pygame.SRCALPHA)
@@ -700,7 +700,7 @@ class FactoryLevel(State):
 
             display.blit(display_icon, (x, y))
 
-            key_text = font.render(str(i + 1), True, (50, 50, 80))
+            key_text = font.render(str(i + 1), False, (50, 50, 80))
             key_rect = key_text.get_rect(topleft=(x + 2, y + 1))
 
             key_bg = pygame.Surface((key_text.get_width() + 4, key_text.get_height() + 2), pygame.SRCALPHA)
@@ -708,7 +708,7 @@ class FactoryLevel(State):
             display.blit(key_bg, (key_rect.x - 2, key_rect.y - 1))
             display.blit(key_text, key_rect)
 
-            text = font.render(str(count), True, (255, 255, 255))
+            text = font.render(str(count), False, (255, 255, 255))
             text_rect = text.get_rect(bottomright=(x + icon_size - 2, y + icon_size - 2))
 
             bg = pygame.Surface((text_rect.width + 4, text_rect.height + 2), pygame.SRCALPHA)
@@ -718,7 +718,7 @@ class FactoryLevel(State):
 
     def draw_day_counter(self, display):
         font = self.game.assets[Fonts.HEADER]
-        text = font.render(f"DAY {self.day_number}", True, (255, 255, 255))
+        text = font.render(f"DAY {self.day_number}", False, (255, 255, 255))
         display.blit(text, (self.game.GAME_WIDTH // 2 - text.get_width() // 2, 10))
 
     def draw_broken_indicators(self, display):
@@ -740,7 +740,7 @@ class FactoryLevel(State):
             screen_x = sprite.rect.centerx - self.camera.offset.x
             screen_y = sprite.rect.top - self.camera.offset.y - 20
 
-            text = font.render("!", True, (255, 220, 40))
+            text = font.render("!", False, (255, 220, 40))
             text_rect = text.get_rect(center=(screen_x, screen_y))
             bg = pygame.Surface((text_rect.width + 8, text_rect.height + 4), pygame.SRCALPHA)
             bg.fill((0, 0, 0, 150))
@@ -756,7 +756,7 @@ class FactoryLevel(State):
             return
 
         font = self.game.assets[Fonts.BODY]
-        text = font.render("Press 'SPACE' to fix", True, (255, 220, 40))
+        text = font.render("Press 'SPACE' to fix", False, (255, 220, 40))
         screen_x = target.rect.centerx - self.camera.offset.x
         screen_y = target.rect.top - self.camera.offset.y - 40
         text_rect = text.get_rect(center=(screen_x, screen_y))
@@ -827,7 +827,7 @@ class FactoryLevel(State):
         if self.manual_hint_seen or self.manual_gui.is_open:
             return
         font = self.game.assets[Fonts.BODY]
-        text = font.render('Press "G" to open the manual', True, (200, 200, 220))
+        text = font.render('Press "G" to open the manual', False, (200, 200, 220))
         text_rect = text.get_rect(center=(self.game.GAME_WIDTH/2, 50))
 
         bg = pygame.Surface((text_rect.width + 16, text_rect.height + 10), pygame.SRCALPHA)
