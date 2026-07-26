@@ -463,8 +463,13 @@ class Game:
         workshop_panel = self.load_frame(os.path.join(self.sprite_dir, "workshop_panel.png"))
         self.assets[Animation.WORKSHOP_PANEL] = workshop_panel
 
-        # rewire box minigame panel
-        # connect the dots
+        # manual panel rect
+        manual_pages = self.load_frames(
+            os.path.join(self.sprite_dir, "manual_panel_pages.png"),
+            0, 0, 480, 330, 7)
+        self.assets[Animation.MANUAL_PANEL_PAGES] = manual_pages
+
+        # rewire box minigame panel, connect the dots
         rewire_box_dots = self.load_frame(os.path.join(self.sprite_dir, "rewire_box_01.png"))
         self.assets[Animation.REWIRE_BOX_PANEL] = rewire_box_dots
 
