@@ -1,5 +1,4 @@
 from .states import State as Base
-from .test_world import TestWorld
 from .level_factory import FactoryLevel
 from .level_office import OfficeLevel
 
@@ -19,4 +18,4 @@ class TitleScreen(Base):
     def render(self, display):
         display.fill((255, 255, 255))
         self.game.draw_text(display, "Title Screen demo", (0, 0, 0), self.game.GAME_WIDTH/2, self.game.GAME_HEIGHT/2)
-        self.game.draw_text(display, "press 'SPACE' to proceed to test world", (0, 0, 0), self.game.GAME_WIDTH/2, self.game.GAME_HEIGHT/2 + 30)
+        self.game.draw_text(display, "press 'SPACE' to proceed play test", (0, 0, 0), self.game.GAME_WIDTH/2, self.game.GAME_HEIGHT/2 + 30)
