@@ -5,7 +5,7 @@ from ...utils import get_scaled_mouse_pos, Fonts, Animation, EntityType
 WORKSHOP_PANEL_SIZE = (576, 288)
 WORKSHOP_SCREEN_PADDING = {"north": 80, "south": 32, "east": 32, "west": 32}
 
-WORKSHOP_ICON_BG_COLOR = (91, 110, 225)
+WORKSHOP_ICON_BG_COLOR = (91, 110, 225, 100)
 WORKSHOP_ICON_SIZE = 64
 
 WORKSHOP_CLOSE_BUTTON = (544, 8, 24, 24)
@@ -20,21 +20,22 @@ WORKSHOP_MATS_START = (190, 140)
 WORKSHOP_MATS_LINE_HEIGHT = 22
 WORKSHOP_CRAFT_BUTTON = (190, 216, 90, 28)
 
-WORKSHOP_DESC_POS = (320, 96)
+WORKSHOP_DESC_POS = (328, 116)
 WORKSHOP_DESC_MAX_WIDTH = 170
 WORKSHOP_DESC_LINE_HEIGHT = 16
 
-WORKSHOP_COLOR_LABEL = (25, 30, 45)
-WORKSHOP_COLOR_OWNED = (70, 75, 95)
-WORKSHOP_COLOR_MATS = (25, 30, 45)
+WORKSHOP_COLOR_LABEL = (255, 255, 255)
+WORKSHOP_COLOR_OWNED = (100,190, 100)
+WORKSHOP_COLOR_MATS = (180, 200, 200)
 WORKSHOP_COLOR_CRAFT_BORDER = (255, 255, 255)
 WORKSHOP_COLOR_CRAFT_TEXT = (255, 255, 255)
-WORKSHOP_COLOR_CRAFT_DISABLED_BORDER = (100, 100, 100)
-WORKSHOP_COLOR_CRAFT_DISABLED_TEXT = (100, 100, 100)
+WORKSHOP_COLOR_CRAFT_DISABLED_BORDER = (70, 85, 195)
+WORKSHOP_COLOR_CRAFT_DISABLED_TEXT = (70, 85, 155)
 WORKSHOP_COLOR_CLOSE = (200, 60, 60)
 WORKSHOP_COLOR_CLOSE_TEXT = (255, 255, 255)
 WORKSHOP_COLOR_ARROW = (255, 255, 255)
 WORKSHOP_COLOR_ARROW_DISABLED = (90, 90, 90)
+WORKSHOP_COLOR_DESCRIPTION = (10, 50, 20)
 
 MACHINE_DESCRIPTIONS = {
     EntityType.CONVEYOR: "Moves resources from one machine to another.",
@@ -134,7 +135,8 @@ class WorkshopGUI:
     def draw(self, display):
         layout = self.get_layout()
         panel = layout["panel"]
-        font = self.game.assets[Fonts.BODY]
+        font_head = self.game.assets[Fonts.HEADER]
+        font_body = self.game.assets[Fonts.BODY]
         icons = self.game.assets.get(Animation.ICONS_BLUEPRINT, {})
         mat_icons = self.game.assets.get(Animation.RESOURCE_ICONS, {})
         economy = self.level.economy
@@ -150,11 +152,11 @@ class WorkshopGUI:
         if icon is not None:
             display.blit(icon, layout["icon_rect"].topleft)
 
-        label = font.render(entity_type.type.upper(), True, WORKSHOP_COLOR_LABEL)
+        label = font_head.render(entity_type.type.upper(), True, WORKSHOP_COLOR_LABEL)
         display.blit(label, layout["label_pos"])
 
         owned_count = self.level.machine_inventory.get_count(entity_type)
-        owned = font.render(f"owned: {owned_count}", True, WORKSHOP_COLOR_OWNED)
+        owned = font_head.render(f"owned: {owned_count}", True, WORKSHOP_COLOR_OWNED)
         display.blit(owned, layout["owned_pos"])
 
         mat_x, mat_y = layout["mats_start"]
@@ -166,7 +168,7 @@ class WorkshopGUI:
             if mat_icon is not None:
                 display.blit(mat_icon, (line_x, mat_y - 2))
                 line_x += mat_icon.get_width() + 6
-            amt_text = font.render(f"{resource_type.value} x{amount}", True, WORKSHOP_COLOR_MATS)
+            amt_text = font_head.render(f"{resource_type.value} x{amount}", True, WORKSHOP_COLOR_MATS)
             display.blit(amt_text, (line_x, mat_y))
             mat_y += WORKSHOP_MATS_LINE_HEIGHT
 
@@ -175,7 +177,7 @@ class WorkshopGUI:
         border_color = WORKSHOP_COLOR_CRAFT_BORDER if can_craft else WORKSHOP_COLOR_CRAFT_DISABLED_BORDER
         text_color = WORKSHOP_COLOR_CRAFT_TEXT if can_craft else WORKSHOP_COLOR_CRAFT_DISABLED_TEXT
         pygame.draw.rect(display, border_color, layout["craft_rect"], 2)
-        craft_text = font.render("CRAFT", True, text_color)
+        craft_text = font_head.render("CRAFT", True, text_color)
         display.blit(craft_text, craft_text.get_rect(center=layout["craft_rect"].center))
 
         # description
@@ -183,7 +185,7 @@ class WorkshopGUI:
         self.draw_wrapped_text(
             display, description, layout["desc_pos"],
             WORKSHOP_DESC_MAX_WIDTH, WORKSHOP_DESC_LINE_HEIGHT,
-            WORKSHOP_COLOR_MATS, font
+            WORKSHOP_COLOR_DESCRIPTION, font_body
         )
 
         # nav arrows
@@ -191,12 +193,12 @@ class WorkshopGUI:
         self.draw_arrow(display, layout["arrow_right_rect"], "right")
 
         # position indicator
-        pos_text = font.render(f"{self.selected_index + 1} / {len(self.machine_items)}", True, WORKSHOP_COLOR_LABEL)
+        pos_text = font_head.render(f"{self.selected_index + 1} / {len(self.machine_items)}", True, WORKSHOP_COLOR_LABEL)
         display.blit(pos_text, pos_text.get_rect(midtop=(panel.centerx, panel.y + WORKSHOP_SCREEN_PADDING["north"] - 20)))
 
         # close button
         pygame.draw.rect(display, WORKSHOP_COLOR_CLOSE, layout["close_rect"])
-        x_text = font.render("X", True, WORKSHOP_COLOR_CLOSE_TEXT)
+        x_text = font_head.render("X", True, WORKSHOP_COLOR_CLOSE_TEXT)
         display.blit(x_text, x_text.get_rect(center=layout["close_rect"].center))
 
     def draw_arrow(self, display, rect, direction):
