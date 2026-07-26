@@ -126,7 +126,7 @@ class TitleScreen(Base):
         if self.buttons["play"].collidepoint(mx, my):
             self.game.reset_key("LMB")
             def do_transition():
-                #new_state = OfficeLevel(self.game)
+                #new_state = OfficeLevel(self.game) # for debugging
                 new_state = FactoryLevel(self.game)
                 new_state.enter_state()
             self.game.fade_trans.start(do_transition)
