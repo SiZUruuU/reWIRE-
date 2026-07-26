@@ -1,5 +1,4 @@
 import pygame, random
-import pygame, random
 
 from .states import State
 from ..map.factory_map import FactoryMap
@@ -7,21 +6,17 @@ from ..camera import Camera, Follow
 from ..entity import Player
 from .lose_screen import LoseScreen
 from ..utils import get_world_mousePos, EntityType, Animation, Direction, Fonts, ParticleSystem
-from ..utils import get_world_mousePos, EntityType, Animation, Direction, Fonts, ParticleSystem
 from component.utils.enums import AudioType, OST, SFX
 from component.utils.audio import AudioComp
 from .economy import Economy
 from .machine_inventory import MachineInventory
 from .gui.rewire_gui import RewireGUI
-from .machine_inventory import MachineInventory
-from .gui.rewire_gui import RewireGUI
 
 # FACTORY LEVEL CONFIG
-DAY_DURATION = 180 # 3 mins
+DAY_DURATION = 180  # 3 mins
 STARTING_QUOTA = 25.65
 PREP_STAGE_PICKUP_DURATION = 0.5
 DOOR_HOLD_DURATION = 3.0
-SPARK_INTERVAL = 0.15
 SPARK_INTERVAL = 0.15
 PICKUP_DURATIONS = {
     EntityType.CONVEYOR: 2.0,
@@ -43,22 +38,18 @@ STARTING_MACHINE_KIT = {
 # p.s for method explanations etc, check test world. Code here should be clean.
 class FactoryLevel(State):
     def __init__(self, game, economy=None, day_number=1, quota=None, machine_inventory=None, placed_machines=None):
-    def __init__(self, game, economy=None, day_number=1, quota=None, machine_inventory=None, placed_machines=None):
         super().__init__(game)
 
         # FACTORY WORLD CONFIG
         PADDING_TILES = 6
         TILE_SIZE = game.TILE_SIZE
         GRID_COLS, GRID_ROWS = 19, 9
-        TILE_SIZE = game.TILE_SIZE
         # wall thickness per side, in tiles
         NORTH_WALL_TILES = 1.8
         SOUTH_WALL_TILES = 3.2
         EAST_WALL_TILES = 2.9
         WEST_WALL_TILES = 1.8
 
-        # basically the bounds of this world, automatically calculated
-        # use the values above
         self.WIDTH = (GRID_COLS + PADDING_TILES * 2) * TILE_SIZE
         self.HEIGHT = (GRID_ROWS + PADDING_TILES * 2) * TILE_SIZE
 
@@ -67,7 +58,6 @@ class FactoryLevel(State):
         self.bounds_right = self.WIDTH - EAST_WALL_TILES * TILE_SIZE
         self.bounds_bottom = self.HEIGHT - SOUTH_WALL_TILES * TILE_SIZE
 
-        # should carry on to other levels that has economy
         self.economy = economy if economy is not None else Economy(starting_cash=0)
         self.day_number = day_number
         self.quota = quota if quota is not None else STARTING_QUOTA
@@ -77,27 +67,14 @@ class FactoryLevel(State):
         # apply starter kit
         if machine_inventory is not None:
             self.machine_inventory = machine_inventory
-        elif day_number == 1:            
+        elif day_number == 1:
             self.machine_inventory = MachineInventory(dict(STARTING_MACHINE_KIT))
-        else:            
-            self.machine_inventory = MachineInventory({})
-
-        self.rewire_gui = RewireGUI(self)
-
-        # apply starter kit
-        if machine_inventory is not None:
-            self.machine_inventory = machine_inventory
-        elif day_number == 1:            
-            self.machine_inventory = MachineInventory(dict(STARTING_MACHINE_KIT))
-        else:            
+        else:
             self.machine_inventory = MachineInventory({})
 
         self.all_sprites = pygame.sprite.LayeredUpdates()
         self.game = game
         self.map = FactoryMap(self)
-
-        self.map = FactoryMap(self)
-
 
         self.player = Player(pygame.Vector2(self.WIDTH/2, self.HEIGHT/2), self, EntityType.PLAYER)
         self.camera = Camera(self.player, game.GAME_WIDTH, game.GAME_HEIGHT)
@@ -105,11 +82,7 @@ class FactoryLevel(State):
 
         # cash particles and machine breakdown
         self.particles = ParticleSystem()
-        self.spark_timer = 0.0        
-
-        # cash particles and machine breakdown
-        self.particles = ParticleSystem()
-        self.spark_timer = 0.0        
+        self.spark_timer = 0.0
 
         self.directions = [
             pygame.Vector2(-1, 0),
@@ -119,10 +92,10 @@ class FactoryLevel(State):
         ]
 
         # add sellbox to world
-        for y in range (3,6):
+        for y in range(3, 6):
             self.map.place_entity(
-                pygame.Vector2(0,y),
-                self.directions[0], 
+                pygame.Vector2(0, y),
+                self.directions[0],
                 EntityType.SELLBOX
             )
 
@@ -137,12 +110,12 @@ class FactoryLevel(State):
                 self.directions[0],
                 EntityType.BUZZSAW
             )
-        
+
         self.dir_index = 0
         self.direction = self.directions[0]
 
         self.selected_entity = EntityType.NONE
-        
+
         self.hotbar = [
             EntityType.CONVEYOR,
             EntityType.BUZZSAW,
@@ -156,7 +129,7 @@ class FactoryLevel(State):
         self.pickup_progress = 0.0
         self.pickup_required = 0.0
 
-        # stage tracking:        
+        # stage tracking:
         self.is_prep_stage = True   # level always opens in prep stage
         self.day_timer = 0.0
         self.day_ended = False
@@ -173,13 +146,9 @@ class FactoryLevel(State):
         # restore placed machines
         self.restore_placed_machines(placed_machines)
 
-        # restore placed machines
-        self.restore_placed_machines(placed_machines)
-
         self.debug_mode = False
 
         AudioComp.play_ost(self, AudioType.OST, OST.TITLE)
-
 
     ## LOGIC METHODS ##
     def update(self, delta_time, actions):
@@ -189,7 +158,7 @@ class FactoryLevel(State):
                 self.day_over = True
 
         prev_rect = self.player.rect.copy()
-        self.handle_inputs(actions)
+        self.handle_inputs(delta_time, actions)
         self.all_sprites.update(self.game.global_time, delta_time, actions)
         self.camera.scroll(delta_time)
 
@@ -197,7 +166,6 @@ class FactoryLevel(State):
         resolved = self.map.resolve_collisions(self.player.rect, prev_rect)
         self.player.rect.topleft = resolved.topleft
         self.player.position = pygame.Vector2(self.player.rect.topleft)
-        self.player.position = pygame.Vector2(self.player.rect.topleft)
 
         self.spark_timer += delta_time
         if self.spark_timer >= SPARK_INTERVAL:
@@ -206,14 +174,7 @@ class FactoryLevel(State):
 
         self.particles.update(delta_time)
 
-        self.spark_timer += delta_time
-        if self.spark_timer >= SPARK_INTERVAL:
-            self.spark_timer = 0.0
-            self.spawn_breakdown_sparks()
-
-        self.particles.update(delta_time)
-
-    def handle_inputs(self, actions):
+    def handle_inputs(self, delta_time, actions):
         mouse = get_world_mousePos(self.game, self.camera)
         tile_x, tile_y = self.map.world_to_tile(mouse['world_x'], mouse['world_y'])
 
@@ -247,22 +208,20 @@ class FactoryLevel(State):
                 placed = self.map.place_entity(location, self.direction, self.selected_entity)
                 if placed is True:
                     self.machine_inventory.remove(self.selected_entity)
-            if self.machine_inventory.has(self.selected_entity):
-                location = pygame.Vector2(tile_x, tile_y)
-                placed = self.map.place_entity(location, self.direction, self.selected_entity)
-                if placed is True:
-                    self.machine_inventory.remove(self.selected_entity)
             self.game.reset_key("LMB")
 
         # for the machine removal feature
         self.handle_pickup(actions, tile_x, tile_y)
 
         # for picking up items and fixing broken machines
-        # for picking up items and fixing broken machines
         if actions["space"]:
             self.selected_entity = EntityType.NONE
-            tile_x, tile_y = self.player.get_interact_tile(self.map, self.game, self.camera)
-            target = self.map.grid[tile_x][tile_y] if tile_x is not None and self.map.is_tile_valid(tile_x, tile_y) else None
+            interact_tile_x, interact_tile_y = self.player.get_interact_tile(self.map, self.game, self.camera)
+            target = (
+                self.map.grid[interact_tile_x][interact_tile_y]
+                if interact_tile_x is not None and self.map.is_tile_valid(interact_tile_x, interact_tile_y)
+                else None
+            )
 
             if target is not None and hasattr(target, "breakdown") and target.breakdown.is_broken:
                 if not self.rewire_gui.is_open:
@@ -273,11 +232,7 @@ class FactoryLevel(State):
 
         # rewiring minigame
         if self.rewire_gui.is_open:
-            self.rewire_gui.handle_input(actions)
-
-        # rewiring minigame
-        if self.rewire_gui.is_open:
-            self.rewire_gui.handle_input(actions)
+            self.rewire_gui.handle_input(actions, delta_time)
 
         # end prep stage, starts the day proper
         if actions["key_enter"] and self.is_prep_stage:
@@ -290,14 +245,11 @@ class FactoryLevel(State):
 
         # enable debug mode
         if actions["Lctrl"] and actions["key_d"]:
-            if not self.debug_mode:
-                self.debug_mode = True
-            else:
-                self.debug_mode = False
+            self.debug_mode = not self.debug_mode
             self.game.reset_key("Lctrl")
             self.game.reset_key("key_d")
 
-    ## PICKUP LOGIC 
+    ## PICKUP LOGIC
     def handle_pickup(self, actions, tile_x, tile_y):
         entity = self.map.grid[tile_x][tile_y] if self.map.is_tile_valid(tile_x, tile_y) else None
         rmb_held = actions["RMB"]
@@ -331,16 +283,12 @@ class FactoryLevel(State):
             covered = [(tx, ty)]
 
         # release/destroy any resources held
-        self._release_held_resources(entity)        
-        self._release_held_resources(entity)        
+        self._release_held_resources(entity)
 
         for tx, ty in covered:
             if self.map.is_tile_valid(tx, ty):
                 self.map.grid[tx][ty] = None
         self.all_sprites.remove(entity)
-
-        # get machine back to inv
-        self.machine_inventory.add(entity.entity_type)
 
         # get machine back to inv
         self.machine_inventory.add(entity.entity_type)
@@ -355,20 +303,17 @@ class FactoryLevel(State):
 
     # helper method for releasing/removing items
     def _release_held_resources(self, entity):
-        # conveyors' list of items
         if hasattr(entity, "items"):
             for item in entity.items:
                 self.all_sprites.remove(item["resource"])
             entity.items = []
 
-        # machines/generators' input ports
         if hasattr(entity, "input_buffer"):
             for port, resource in entity.input_buffer.items():
                 if resource is not None:
                     self.all_sprites.remove(resource)
             entity.input_buffer = {p: None for p in entity.input_buffer}
 
-        # for machines/generators with single output/port
         if hasattr(entity, "output_buffer") and entity.output_buffer is not None:
             self.all_sprites.remove(entity.output_buffer)
             entity.output_buffer = None
@@ -423,11 +368,8 @@ class FactoryLevel(State):
             quota=self.quota,
             machine_inventory=self.machine_inventory,
             placed_machines=self.snapshot_placed_machines(),
-            machine_inventory=self.machine_inventory,
-            placed_machines=self.snapshot_placed_machines(),
         )
         office.enter_state()
-
 
     def on_day_lost(self):
         self.day_ended = False
@@ -445,14 +387,9 @@ class FactoryLevel(State):
         self.quota = STARTING_QUOTA
         self.day_number = 1
         self.machine_inventory = MachineInventory(dict(STARTING_MACHINE_KIT))
-        self.day_number = 1
-        self.machine_inventory = MachineInventory(dict(STARTING_MACHINE_KIT))
-
-    # (> w <)?
 
     ## DISPLAY ##
     def render(self, display):
-        # 0.0 = full day, 1.0 = full night
         night_factor = 0.0
         base_color = self._lerp_color((50, 60, 90), (10, 12, 25), night_factor)
         display.fill((0, 0, 0))
@@ -462,17 +399,14 @@ class FactoryLevel(State):
         world_rect = pygame.Rect(world_screen_x, world_screen_y, self.WIDTH, self.HEIGHT)
         pygame.draw.rect(display, base_color, world_rect)
 
-        # draws map background
         self.map.draw(display, self.camera)
 
         for sprite in self.all_sprites:
             camera = sprite.rect.topleft - self.camera.offset
             display.blit(sprite.image, camera)
 
-        # draws map foreground
         self.map.draw_foreground(display, self.camera)
 
-        self.particles.draw(display, self.camera.offset)
         self.particles.draw(display, self.camera.offset)
         self.draw_night_overlay(display)
 
@@ -497,10 +431,6 @@ class FactoryLevel(State):
         self.draw_rewire_prompt(display)
 
         self.rewire_gui.draw(display)
-        self.draw_broken_indicators(display)
-        self.draw_rewire_prompt(display)
-
-        self.rewire_gui.draw(display)
 
         # debugs
         self.show_all_obstacles(display)
@@ -510,14 +440,10 @@ class FactoryLevel(State):
         return tuple(int(a + (b - a) * t) for a, b in zip(c1, c2))
 
     ## DRAW METHODS
-    # HUD and visual aids here:
     def draw_placement_preview(self, display):
         if not self.machine_inventory.has(self.selected_entity):
             return
-        
-        if not self.machine_inventory.has(self.selected_entity):
-            return
-        
+
         mouse = get_world_mousePos(self.game, self.camera)
         tile_x, tile_y = self.map.world_to_tile(mouse['world_x'], mouse['world_y'])
         sprite = self.get_preview_sprite(self.selected_entity, self.direction)
@@ -537,7 +463,7 @@ class FactoryLevel(State):
         screen_x = world_x - self.camera.offset.x
         screen_y = world_y - self.camera.offset.y
         display.blit(preview, (screen_x, screen_y))
-    
+
     def draw_player_shadow(self, display):
         shadow_rect = self.player.shadow_image.get_rect(center=self.player.rect.midbottom)
         screen_x = shadow_rect.x - self.camera.offset.x
@@ -561,7 +487,6 @@ class FactoryLevel(State):
         highlight.fill(color)
         display.blit(highlight, (screen_x, screen_y))
 
-    # helper method for draw_placement_preview
     def get_preview_sprite(self, entity_type, direction):
         assets = self.game.assets.get(entity_type)
         if not assets:
@@ -615,9 +540,8 @@ class FactoryLevel(State):
         pygame.draw.rect(display, (10, 10, 10), (x, y, bar_width, bar_height), 1)
 
     def draw_day_timer(self, display):
-        # Placeholder for timer
         font = self.game.assets[Fonts.HEADER]
-        remaining = max(0, DAY_DURATION - self.day_timer)        
+        remaining = max(0, DAY_DURATION - self.day_timer)
         if self.is_prep_stage:
             text = font.render(f"PREPARATORY", True, (255, 255, 255))
             display.blit(text, (self.game.GAME_WIDTH - 120, 10))
@@ -716,20 +640,18 @@ class FactoryLevel(State):
         start_y = 60
         x = self.game.GAME_WIDTH - icon_size - 16
 
-        # background
         strip_padding = 4
         strip_height = len(self.hotbar) * (icon_size + padding) - padding + strip_padding * 2
         strip = pygame.Surface((icon_size + strip_padding * 2, strip_height), pygame.SRCALPHA)
         strip.fill((0, 0, 0, 150))
         display.blit(strip, (x - strip_padding, start_y - strip_padding))
-        
+
         for i, entity_type in enumerate(self.hotbar):
             icon = icons.get(entity_type)
             if icon is None:
                 continue
 
             y = start_y + i * (icon_size + padding)
-            count = self.machine_inventory.get_count(entity_type)
             count = self.machine_inventory.get_count(entity_type)
             owned = count > 0
 
@@ -740,14 +662,12 @@ class FactoryLevel(State):
                 display_icon.blit(dark, (0, 0), special_flags=pygame.BLEND_RGB_MULT)
                 display_icon.set_alpha(160)
 
-            # highlight if currently selected
             if self.selected_entity == entity_type:
                 highlight_rect = pygame.Rect(x - 4, y - 4, icon_size + 8, icon_size + 8)
                 pygame.draw.rect(display, (255, 230, 120), highlight_rect, 2)
 
             display.blit(display_icon, (x, y))
 
-            # hotkey number
             key_text = font.render(str(i + 1), True, (50, 50, 80))
             key_rect = key_text.get_rect(topleft=(x + 2, y + 1))
 
@@ -756,7 +676,6 @@ class FactoryLevel(State):
             display.blit(key_bg, (key_rect.x - 2, key_rect.y - 1))
             display.blit(key_text, key_rect)
 
-            # counter for amount of machines
             text = font.render(str(count), True, (255, 255, 255))
             text_rect = text.get_rect(bottomright=(x + icon_size - 2, y + icon_size - 2))
 
@@ -814,7 +733,6 @@ class FactoryLevel(State):
         display.blit(bg, (text_rect.x - 6, text_rect.y - 3))
         display.blit(text, text_rect)
 
-
     # machine persistence
     def snapshot_placed_machines(self):
         seen = set()
@@ -834,8 +752,6 @@ class FactoryLevel(State):
                 })
         return snapshot
 
-    # one of the coolest thing I thought of
-    # a snapshot mechanic where it remembers and places prev machine placement 
     def restore_placed_machines(self, snapshot):
         if not snapshot:
             return
@@ -856,29 +772,38 @@ class FactoryLevel(State):
                 random.uniform(rect.left, rect.right),
                 random.uniform(rect.top, rect.bottom)
             )
+            # bright orange
             self.particles.emit_burst(
                 spark_pos,
-                color=(255, 200, 80),
+                color=(255, 69, 0),
                 count=random.randint(1, 3),
                 size_range=(1, 6),
-                speed_range=(20, 80),
-                lifetime_range=(0.15, 0.5)
+                speed_range=(50, 200),
+                lifetime_range=(0.15, 2)
             )
+            # yellow
+            self.particles.emit_burst(
+                spark_pos,
+                color=(255, 165, 0),
+                count=random.randint(1, 3),
+                size_range=(1, 6),
+                speed_range=(50, 200),
+                lifetime_range=(0.15, 2)
+            )
+
 
     # for debugging
     def show_all_obstacles(self, display):
         if not self.debug_mode:
             return
 
-        # static obstacles (these are dev defined obstacles)
         for obstacle in self.map.obstacles:
             screen_x = obstacle.x - self.camera.offset.x
             screen_y = obstacle.y - self.camera.offset.y
             rect = pygame.Rect(screen_x, screen_y, obstacle.width, obstacle.height)
             pygame.draw.rect(display, (255, 0, 255), rect, 2)
 
-        # solid machine sprites
-        from ..map.factory_map import SOLID_ENTITY_TYPES # local import
+        from ..map.factory_map import SOLID_ENTITY_TYPES
         for sprite in self.all_sprites:
             if getattr(sprite, "entity_type", None) in SOLID_ENTITY_TYPES:
                 screen_x = sprite.rect.x - self.camera.offset.x
@@ -886,7 +811,6 @@ class FactoryLevel(State):
                 rect = pygame.Rect(screen_x, screen_y, sprite.rect.width, sprite.rect.height)
                 pygame.draw.rect(display, (255, 0, 255), rect, 2)
 
-        # player's mmmmmm feet collision box
         feet_height = 16
         feet_width_inset = 12
         feet_x = self.player.rect.x + feet_width_inset - self.camera.offset.x
