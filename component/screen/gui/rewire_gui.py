@@ -33,7 +33,7 @@ REWIRE_NODE_RADIUS = 7
 # hard coded area based off of my calculation
 # no one speaks about this
 REWIRE_NODE_A_AREA = (112, 80, 16, 144)
-REWIRE_NODE_B_AREA = (284, 96, 16, 130)
+REWIRE_NODE_B_AREA = (284, 96, 16, 120)
 
 REWIRE_BATCH_ADVANCE_DELAY = 0.5
 
