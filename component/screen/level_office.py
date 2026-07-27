@@ -65,7 +65,7 @@ class OfficeLevel(State):
         self.debug_mode = False
 
         self.ost = self.game.audio_handler
-        self.ost.play_ost(AudioType.OST, OST.OFFICE)
+        self.ost.play_ost(AudioType.OST, OST.OFFICE, 0.5)
 
 
     ## LOGIC METHODS ##

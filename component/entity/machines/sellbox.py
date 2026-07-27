@@ -25,7 +25,7 @@ class SellBox(MachineEntity):
         if not self.can_accept(resource, port):
             return False
 
-        self.sfx.play_sfx(AudioType.SFX, SFX.SELL)
+        self.sfx.play_sfx(AudioType.SFX, SFX.SELL, 1.0)
 
         value = RESOURCE_DATA.get(resource.resource_type, {}).get("value", 0)
         self.world.earned_cash_today = round(self.world.earned_cash_today + value, 5)

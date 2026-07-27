@@ -171,7 +171,7 @@ class FactoryLevel(State):
         )
 
         if any_machine_broken:
-            self.audio.play_loop("machine_broken_loop", AudioType.SFX, SFX.MACHINE_BROKEN)
+            self.audio.play_loop("machine_broken_loop", AudioType.SFX, SFX.MACHINE_BROKEN, 0.3)
         else:
             self.audio.stop_loop("machine_broken_loop")
 
@@ -226,7 +226,7 @@ class FactoryLevel(State):
 
         # placing down machines
         if actions["LMB"] and self.selected_entity != EntityType.NONE:
-            self.audio.play_sfx(AudioType.SFX, SFX.MACHINE_PLACED)
+            self.audio.play_sfx(AudioType.SFX, SFX.MACHINE_PLACED, 0.3)
             if self.machine_inventory.has(self.selected_entity):
                 location = pygame.Vector2(tile_x, tile_y)
                 placed = self.map.place_entity(location, self.direction, self.selected_entity)
