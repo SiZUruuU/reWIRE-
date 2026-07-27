@@ -30,6 +30,9 @@ class PlayerEntity(BaseEntity):
         self.shadow_image = pygame.Surface((30, 10), pygame.SRCALPHA)
         pygame.draw.ellipse(self.shadow_image, (0, 0, 0, 90), self.shadow_image.get_rect())
 
+        # init audio handler
+        self.audio_handler = AudioComp(self.world.game)
+
         # player attributes
         self.speed = 50
 
@@ -37,6 +40,12 @@ class PlayerEntity(BaseEntity):
     def update(self, global_time, delta_time, actions):
         # input key actions
         self.handle_input(actions)
+
+        # sound effects
+        if self.velocity.length_squared() > 0:
+            self.audio_handler.play_loop("walk", AudioType.SFX, SFX.WALK)
+        else:
+            self.audio_handler.stop_loop("walk")
 
         # update position:
         # added world collision

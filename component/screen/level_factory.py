@@ -79,7 +79,7 @@ class FactoryLevel(State):
         self.map = FactoryMap(self)
 
         #Walking State 
-        self.iswalking = False
+        #self.iswalking = False
 
         self.audio = AudioComp(game)
 
@@ -178,7 +178,7 @@ class FactoryLevel(State):
         self.camera.scroll(delta_time)
 
         #Walking state checker
-        self.audio.play_walkingSFX(self.iswalking, AudioType.SFX, SFX.WALK)
+        #self.audio.play_walkingSFX(self.iswalking, AudioType.SFX, SFX.WALK)
 
         # resolve player collision with obstacles
         resolved = self.map.resolve_collisions(self.player.rect, prev_rect)
@@ -204,12 +204,12 @@ class FactoryLevel(State):
                 AudioComp.play_sfx(self, AudioType.SFX, SFX.HOTBAR_SELECT)
                 self.game.reset_key(key_string)
 
-        self.iswalking = any([
-            actions["left"],
-            actions["right"],
-            actions["up"],
-            actions["down"]
-        ])
+        #self.iswalking = any([
+        #    actions["left"],
+        #    actions["right"],
+        #    actions["up"],
+        #    actions["down"]
+        #])
 
         # clear held machine
         if actions["key_q"]:
@@ -285,11 +285,11 @@ class FactoryLevel(State):
             self.game.reset_key("Lctrl")
             self.game.reset_key("key_d")
 
-    def play_walkSFX(self):
-        if self.walking:
-            AudioComp.play_sfx(self, AudioType.SFX, SFX.WALK)
-        else:
-            pass
+    #def play_walkSFX(self):
+    #    if self.walking:
+    #        AudioComp.play_sfx(self, AudioType.SFX, SFX.WALK)
+    #    else:
+    #       pass
 
     ## PICKUP LOGIC
     def handle_pickup(self, actions, tile_x, tile_y):
