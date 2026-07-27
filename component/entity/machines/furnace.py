@@ -1,8 +1,6 @@
 from ...utils import ResourceType, EntityType, Animation, Layers, Direction
 from .machine import MachineEntity
 from pygame import Vector2
-from component.utils.enums import AudioType, OST, SFX
-from component.utils.audio import AudioComp
 
 # this machine needs two inputs a fuel source and the processable source
 # input1:fuel input2:material = output:metals,glass,charcoal
@@ -41,7 +39,7 @@ class Furnace(MachineEntity):
 
         self.apply_direction(direction)
 
-        self.sfx = AudioComp(world.game)
+        self.sfx = self.world.game.audio_handler
     
     def can_accept(self, resource, port):
         if port is None:

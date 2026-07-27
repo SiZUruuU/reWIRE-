@@ -3,7 +3,6 @@ from ...utils import EntityType, Direction, Animation, check_tile_at, Layers
 from pygame import Vector2
 from .breakdown import BreakdownComponent
 from component.utils.enums import AudioType, OST, SFX
-from component.utils.audio import AudioComp
 
 class MachineEntity(BaseEntity):
     # important! when making machines that are bigger than 1x1, make sure
@@ -23,7 +22,7 @@ class MachineEntity(BaseEntity):
         self.footprint = self.FOOTPRINT # how much tiles the machine takes up
         self.port_map = self.PORT_MAP
         self.output_offset = self.OUTPUT_OFFSET
-        self.sfx = AudioComp(self.world.game)
+        self.sfx = self.world.game.audio_handler
         self.direction = direction
         dir_key = Direction((int(direction.x), int(direction.y)))
         self.animations = self.world.game.assets[entity_type][Animation.STRAIGHT][dir_key]

@@ -4,7 +4,6 @@ from ..entity import BaseEntity
 from ..machines.conveyor import Conveyor
 from ...utils import EntityType, Animation, Layers, get_world_mousePos
 from component.utils.enums import AudioType, OST, SFX
-from component.utils.audio import AudioComp
 
 class PlayerEntity(BaseEntity):
     def __init__(self, position, world, entity_type: EntityType):
@@ -31,7 +30,7 @@ class PlayerEntity(BaseEntity):
         pygame.draw.ellipse(self.shadow_image, (0, 0, 0, 90), self.shadow_image.get_rect())
 
         # init audio handler
-        self.audio_handler = AudioComp(self.world.game)
+        self.audio_handler = self.world.game.audio_handler
 
         # player attributes
         self.speed = 50

@@ -1,8 +1,7 @@
 import pygame, os, time
 from component.screen.title_screen import TitleScreen
-from component.utils import EntityType, Animation, Direction, Fonts, ResourceType, WorldType, Layers
+from component.utils import EntityType, Animation, Direction, Fonts, ResourceType, WorldType, Layers, AudioComp
 from component.utils.enums import AudioType, OST, SFX
-from component.utils.audio import AudioComp
 from component.screen.fade_effect import FadeTransition
 
 class Game:
@@ -23,6 +22,8 @@ class Game:
         self.game_canvas = pygame.Surface((self.GAME_WIDTH, self.GAME_HEIGHT))
         # screen is simply the upscaled version of game_canvas
         self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT))
+
+        self.audio_handler = AudioComp(self)
 
         # Game loop flags:
         self.isRunning, self.isPlaying = True, True
@@ -82,9 +83,7 @@ class Game:
         # load states to stack, must be in order
         self.load_states()
 
-        self.fade_trans = FadeTransition(self, duration=3.0)
-
-        AudioComp(self)
+        self.fade_trans = FadeTransition(self, duration=3.0)        
 
     # main game loop
     def game_loop(self):

@@ -3,7 +3,6 @@ from .machine import MachineEntity
 from ..resources.resource_data import RESOURCE_DATA
 from pygame import Vector2
 from component.utils.enums import AudioType, OST, SFX
-from component.utils.audio import AudioComp
 
 # This class should not be treated as a machine despite being a child class of
 # MachineEntity, placed only by us devs to the world/level's designated selling area
@@ -14,7 +13,7 @@ class SellBox(MachineEntity):
     def __init__(self, position, direction, world, entity_type):
         super().__init__(position, direction, world, entity_type)        
         self.recipes = None # recipe must be None
-        self.sfx = AudioComp(self.world.game)
+        self.sfx = self.world.game.audio_handler
 
     def can_accept(self, resource, port="material"):
         if self.input_buffer.get(port) is not None:

@@ -1,17 +1,19 @@
 import pygame
 from .states import State
-from ..utils import Fonts
+from ..utils import Fonts, AudioType, SFX
 
 class LoseScreen(State):
-    def __init__(self, game):
+    def __init__(self, game):        
         super().__init__(game)
+        self.game.audio_handler.play_sfx(AudioType.SFX, SFX.LOSS, 1.0)
 
     def update(self, delta_time, actions):
-        if actions["key_return"]:
-            self.game.reset_key("key_return")
+        if actions["key_enter"]:
+            self.game.reset_key("key_enter")
             prev = self.prev_state
 
             def do_transition():
+                self.game.audio_handler.stop_ost()
                 self.exit_state()
                 prev.exit_state()
             self.game.fade_trans.start(do_transition)
