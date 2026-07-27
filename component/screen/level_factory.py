@@ -14,7 +14,7 @@ from .gui.rewire_gui import RewireGUI
 from .gui.manual_gui import ManualGUI
 
 # FACTORY LEVEL CONFIG
-DAY_DURATION = 180  # 3 mins
+DAY_DURATION = 1  # 3 mins
 STARTING_QUOTA = round(random.uniform(20, 30), 2)
 PREP_STAGE_PICKUP_DURATION = 0.5
 DOOR_HOLD_DURATION = 3.0
@@ -81,7 +81,7 @@ class FactoryLevel(State):
         #Walking State 
         #self.iswalking = False
 
-        self.audio = AudioComp(game)
+        self.audio = self.game.audio_handler
 
         self.player = Player(pygame.Vector2(self.WIDTH/2, self.HEIGHT/2), self, EntityType.PLAYER)
         self.camera = Camera(self.player, game.GAME_WIDTH, game.GAME_HEIGHT)
@@ -215,7 +215,7 @@ class FactoryLevel(State):
             key_string = f"key_{k+1}"
             if actions[key_string]:
                 self.selected_entity = self.hotbar[k]
-                AudioComp.play_sfx(self, AudioType.SFX, SFX.HOTBAR_SELECT)
+                self.audio.play_sfx(AudioType.SFX, SFX.HOTBAR_SELECT)
                 self.game.reset_key(key_string)
 
         #self.iswalking = any([

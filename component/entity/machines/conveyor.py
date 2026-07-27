@@ -16,9 +16,9 @@ class Conveyor(MachineEntity):
         # override with lower chances
         self.breakdown = BreakdownComponent(
             wear_per_cycle=2,
-            break_chance_base=0.005,
-            break_chance_per_wear=0.0005,
-            full_break_chance=0.0005
+            break_chance_base=0.0005,
+            break_chance_per_wear=0.00005,
+            full_break_chance=0.00005
         )
         self.apply_direction(direction)
 

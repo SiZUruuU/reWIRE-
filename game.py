@@ -24,6 +24,8 @@ class Game:
         # screen is simply the upscaled version of game_canvas
         self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT))
 
+        self.audio_handler = AudioComp(self)
+                
         # Game loop flags:
         self.isRunning, self.isPlaying = True, True
 
@@ -82,9 +84,7 @@ class Game:
         # load states to stack, must be in order
         self.load_states()
 
-        self.fade_trans = FadeTransition(self, duration=3.0)
-
-        AudioComp(self)
+        self.fade_trans = FadeTransition(self, duration=3.0)        
 
     # main game loop
     def game_loop(self):

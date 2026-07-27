@@ -24,7 +24,14 @@ class Generator(BaseEntity):
 
         self.timer = 0.0
         self.output_buffer = None
-        self.breakdown = BreakdownComponent()
+
+        # override with lower chances
+        self.breakdown = BreakdownComponent(
+            wear_per_cycle=5,
+            break_chance_base=0.005,
+            break_chance_per_wear=0.0005,
+            full_break_chance=0.0005
+        )
 
         dir_key = Direction((int(direction.x), int(direction.y)))
         self.animation_speed = 10.0
