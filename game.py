@@ -1,4 +1,4 @@
-import pygame, os, time
+import pygame, os, time, sys
 from component.screen.title_screen import TitleScreen
 from component.utils import EntityType, Animation, Direction, Fonts, ResourceType, WorldType, Layers, AudioComp
 from component.utils.enums import AudioType, OST, SFX
@@ -230,9 +230,14 @@ class Game:
         text_rect.center = (x, y)
         surface.blit(text_surface, text_rect)
 
+    def get_base_path():
+        if hasattr(sys, '_MEIPASS'):
+            return sys._MEIPASS
+        return os.path.dirname(os.path.abspath(__file__))
+    
     # handle asset loading
     def load_assets(self):
-        self.assets_dir = os.path.join("asset")
+        self.assets_dir = os.path.join(self.get_base_path, "asset")
         self.sprite_dir = os.path.join(self.assets_dir, "sprites")
         self.font_dir = os.path.join(self.assets_dir, "fonts")
         self.sfx_dir = os.path.join(self.assets_dir, "sfx")
