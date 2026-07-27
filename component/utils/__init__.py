@@ -1,6 +1,7 @@
 from .coordinates import get_world_mousePos, check_tile_at, get_scaled_mouse_pos
 from .enums import EntityType, Animation, Direction, Fonts, Layers, ResourceType, WorldType, OST, AudioType, SFX
 from .particle import ParticleSystem
+from .audio import AudioComp
 
 __all__ = [
     "get_world_mousePos", 
@@ -17,4 +18,5 @@ __all__ = [
     "AudioType",
     "OST",
     "SFX",
+    "AudioComp"
     ]

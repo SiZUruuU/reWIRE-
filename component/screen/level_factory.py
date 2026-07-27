@@ -7,7 +7,6 @@ from ..entity import Player
 from .lose_screen import LoseScreen
 from ..utils import get_world_mousePos, EntityType, Animation, Direction, Fonts, ParticleSystem
 from component.utils.enums import AudioType, OST, SFX
-from component.utils.audio import AudioComp
 from .economy import Economy
 from .machine_inventory import MachineInventory
 from .gui.rewire_gui import RewireGUI
@@ -161,14 +160,9 @@ class FactoryLevel(State):
         self.restore_placed_machines(placed_machines)
 
         self.debug_mode = False
-        
-        # SOUNDS
-        #AudioComp.play_ost(self, AudioType.OST, OST.TITLE)
 
     ## LOGIC METHODS ##
     def update(self, delta_time, actions):
-
-        # Inside FactoryLevel.update():
 
         # Check if any entity in all_sprites with a breakdown component is broken
         any_machine_broken = any(
@@ -190,9 +184,6 @@ class FactoryLevel(State):
         self.handle_inputs(delta_time, actions)
         self.all_sprites.update(self.game.global_time, delta_time, actions)
         self.camera.scroll(delta_time)
-
-        #Walking state checker
-        #self.audio.play_walkingSFX(self.iswalking, AudioType.SFX, SFX.WALK)
 
         # resolve player collision with obstacles
         resolved = self.map.resolve_collisions(self.player.rect, prev_rect)
@@ -218,13 +209,6 @@ class FactoryLevel(State):
                 self.audio.play_sfx(AudioType.SFX, SFX.HOTBAR_SELECT)
                 self.game.reset_key(key_string)
 
-        #self.iswalking = any([
-        #    actions["left"],
-        #    actions["right"],
-        #    actions["up"],
-        #    actions["down"]
-        #])
-
         # clear held machine
         if actions["key_q"]:
             self.selected_entity = EntityType.NONE
@@ -242,7 +226,7 @@ class FactoryLevel(State):
 
         # placing down machines
         if actions["LMB"] and self.selected_entity != EntityType.NONE:
-            AudioComp.play_sfx(self, AudioType.SFX, SFX.MACHINE_PLACED)
+            self.audio.play_sfx(self, AudioType.SFX, SFX.MACHINE_PLACED)
             if self.machine_inventory.has(self.selected_entity):
                 location = pygame.Vector2(tile_x, tile_y)
                 placed = self.map.place_entity(location, self.direction, self.selected_entity)
@@ -298,13 +282,7 @@ class FactoryLevel(State):
             self.debug_mode = not self.debug_mode
             self.game.reset_key("Lctrl")
             self.game.reset_key("key_d")
-
-    #def play_walkSFX(self):
-    #    if self.walking:
-    #        AudioComp.play_sfx(self, AudioType.SFX, SFX.WALK)
-    #    else:
-    #       pass
-
+            
     ## PICKUP LOGIC
     def handle_pickup(self, actions, tile_x, tile_y):
         entity = self.map.grid[tile_x][tile_y] if self.map.is_tile_valid(tile_x, tile_y) else None

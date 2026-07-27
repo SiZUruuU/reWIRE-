@@ -6,7 +6,6 @@ from ..camera import Camera, Follow
 from ..entity import Player, ResourceEntity
 from ..utils import get_world_mousePos, EntityType, Animation, Direction, ResourceType, check_tile_at, Fonts
 from component.utils.enums import AudioType, OST, SFX
-from component.utils.audio import AudioComp
 ## THIS IS A TESTING WORLD TO TEST FEATURES AND THEORIES ##
 # Use this world as reference in making other levels as all
 # features is applied in this class
@@ -96,7 +95,7 @@ class TestWorld(State):
             key_string = f"key_{k+1}"
             if actions[key_string]:
                 self.selected_entity = self.hotbar[k]
-                AudioComp.play_sfx(self, AudioType.SFX, SFX.HOTBAR_SELECT)
+                #AudioComp.play_sfx(self, AudioType.SFX, SFX.HOTBAR_SELECT)
                 self.game.reset_key(key_string)
             
         # clear selection:
@@ -123,7 +122,7 @@ class TestWorld(State):
                 self.direction,
                 self.selected_entity
             )  
-            AudioComp.play_sfx(self, AudioType.SFX, SFX.HOVER)                      
+            #AudioComp.play_sfx(self, AudioType.SFX, SFX.HOVER)                      
             self.game.reset_key("LMB")
 
         # handle machine removal:

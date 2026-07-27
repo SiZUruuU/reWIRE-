@@ -6,7 +6,6 @@ from ..camera import Camera, Follow
 from ..entity import Player, SHOP_PRICES
 from ..utils import EntityType, Fonts, Animation, ResourceType
 from component.utils.enums import AudioType, OST, SFX
-from component.utils.audio import AudioComp
 from .gui.shop_gui import ShopGUI
 from .gui.workshop_gui import WorkshopGUI
 from .economy import Economy
@@ -65,7 +64,7 @@ class OfficeLevel(State):
 
         self.debug_mode = False
 
-        self.ost = AudioComp(game)
+        self.ost = self.game.audio_handler
         self.ost.play_ost(AudioType.OST, OST.OFFICE)
 
 
