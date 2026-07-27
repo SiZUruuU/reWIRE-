@@ -133,7 +133,7 @@ class TitleScreen(Base):
             AudioComp.play_sfx(self, AudioType.SFX, SFX.CLICK)
             self.ost.stop_ost()
             def do_transition():
-                #new_state = OfficeLevel(self.game)
+                #new_state = OfficeLevel(self.game) # for debugging
                 new_state = FactoryLevel(self.game)
                 new_state.enter_state()
             self.game.fade_trans.start(do_transition)

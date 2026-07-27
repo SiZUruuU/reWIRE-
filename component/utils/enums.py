@@ -96,6 +96,7 @@ class Fonts(Enum):
     TITLE = auto()
     HEADER = auto()
     BODY = auto()
+    SHOP = auto()
 
 class AudioType(Enum):
     SFX = "sfx"

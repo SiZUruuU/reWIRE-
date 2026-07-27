@@ -26,7 +26,7 @@ WORKSHOP_DESC_LINE_HEIGHT = 16
 
 WORKSHOP_COLOR_LABEL = (255, 255, 255)
 WORKSHOP_COLOR_OWNED = (200,200, 200)
-WORKSHOP_COLOR_MATS = (180, 200, 200)
+WORKSHOP_COLOR_MATS = (140, 190, 170)
 WORKSHOP_COLOR_CRAFT_BORDER = (255, 255, 255)
 WORKSHOP_COLOR_CRAFT_TEXT = (255, 255, 255)
 WORKSHOP_COLOR_CRAFT_DISABLED_BORDER = (150, 150, 150)
@@ -35,7 +35,7 @@ WORKSHOP_COLOR_CLOSE = (200, 60, 60)
 WORKSHOP_COLOR_CLOSE_TEXT = (255, 255, 255)
 WORKSHOP_COLOR_ARROW = (255, 255, 255)
 WORKSHOP_COLOR_ARROW_DISABLED = (90, 90, 90)
-WORKSHOP_COLOR_DESCRIPTION = (10, 50, 20)
+WORKSHOP_COLOR_DESCRIPTION = (0, 5, 0)
 
 MACHINE_DESCRIPTIONS = {
     EntityType.CONVEYOR: "Moves resources from one machine to another.",
@@ -136,7 +136,7 @@ class WorkshopGUI:
         layout = self.get_layout()
         panel = layout["panel"]
         font_head = self.game.assets[Fonts.HEADER]
-        font_body = self.game.assets[Fonts.BODY]
+        font_body = self.game.assets[Fonts.SHOP]
         icons = self.game.assets.get(Animation.ICONS_BLUEPRINT, {})
         mat_icons = self.game.assets.get(Animation.RESOURCE_ICONS, {})
         economy = self.level.economy
