@@ -2,6 +2,8 @@ from ..entity import BaseEntity
 from ...utils import EntityType, Direction, Animation, check_tile_at, Layers
 from pygame import Vector2
 from .breakdown import BreakdownComponent
+from component.utils.enums import AudioType, OST, SFX
+from component.utils.audio import AudioComp
 
 class MachineEntity(BaseEntity):
     # important! when making machines that are bigger than 1x1, make sure
@@ -21,6 +23,7 @@ class MachineEntity(BaseEntity):
         self.footprint = self.FOOTPRINT # how much tiles the machine takes up
         self.port_map = self.PORT_MAP
         self.output_offset = self.OUTPUT_OFFSET
+        self.sfx = AudioComp(self.world.game)
         self.direction = direction
         dir_key = Direction((int(direction.x), int(direction.y)))
         self.animations = self.world.game.assets[entity_type][Animation.STRAIGHT][dir_key]
@@ -49,6 +52,7 @@ class MachineEntity(BaseEntity):
         self.breakdown = BreakdownComponent()
     
     def update(self, global_time, delta_time, actions):
+
         if self.world.is_prep_stage or self.world.day_over:
             self.animate(global_time)
             return
@@ -63,6 +67,13 @@ class MachineEntity(BaseEntity):
     def animate(self, global_time):
         if self.breakdown.is_broken:
             self.apply_shake(self.position, global_time % 0.3, 0.3, max_intensity=3.0)
+            was_broken = False
+            is_currently_broken = bool(self.breakdown.is_broken)
+
+            if is_currently_broken and not was_broken:
+                self.world.audio.play_sfx(AudioType.SFX, SFX.MACHINE_BROKEN)
+
+            was_broken = is_currently_broken
         elif self.is_processing and self.active_recipe is not None:
             duration = self.active_recipe["duration"]
             elapsed = duration - self.process_time
