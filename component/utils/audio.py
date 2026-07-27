@@ -9,12 +9,12 @@ class AudioComp:
         self._next_channel_id = 2
 
     # USE THIS FOR NON LOOPING LOGIC, ONE SHOT ONLY
-    def play_sfx(self, audio_type, sfx_name, volume=1.0):
+    def play_sfx(self, audio_type, sfx_name, volume=0.5):
         sfx = self.game.assets[audio_type][sfx_name]
         sfx.set_volume(volume)
         sfx.play()
 
-    def play_ost(self, audio_type, ost_name, volume=0.5):
+    def play_ost(self, audio_type, ost_name, volume=1.0):
         self.ost = self.game.assets[audio_type][ost_name]
         if not self.ost_channel.get_busy():
             self.ost_channel.play(self.ost, -1)

@@ -63,27 +63,25 @@ class Furnace(MachineEntity):
         return True
 
     def process(self, delta_time):
-        # if machine's state is currently processing:
+        if self.breakdown.is_fully_stopped:
+            return
+
         if self.is_processing:
-            # starts processing
             self.process_time -= delta_time
-            # process finished
             if self.process_time <= 0.0:
                 self.complete_processing()
             return
 
-        # furnace specific: fuel
-        fuel = self.input_buffer.get("fuel")        
+        fuel = self.input_buffer.get("fuel")
         material = self.input_buffer.get("material")
         if fuel is None or material is None or self.output_buffer is not None:
             return
-        
-        # build the new material:
-        recipe = self.recipes.get(material.resource_type)        
+
+        recipe = self.recipes.get(material.resource_type)
         if recipe is None:
             return
         self.active_recipe = recipe
-        self.process_time = recipe["duration"]
+        self.process_time = recipe["duration"] * self.breakdown.slowdown_multiplier
         self.is_processing = True
     
     def complete_processing(self):
@@ -125,7 +123,9 @@ class Furnace(MachineEntity):
         frame_index = int(global_time * self.animation_speed) % total
         self.image = frames[frame_index]
 
-        if self.is_processing and self.active_recipe is not None:
+        if self.breakdown.is_broken:
+            self.apply_shake(self.position, global_time % 0.3, 0.3, max_intensity=3.0)
+        elif self.is_processing and self.active_recipe is not None:
             duration = self.active_recipe["duration"]
             elapsed = duration - self.process_time
             self.apply_shake(self.position, elapsed, duration, max_intensity=1.0)
