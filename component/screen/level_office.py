@@ -119,6 +119,7 @@ class OfficeLevel(State):
     def next_day(self):
         from .level_factory import FactoryLevel
         def do_transition():
+            self.ost.stop_ost()
             self.exit_state()
             factory = FactoryLevel(
                 self.game,

@@ -14,8 +14,9 @@ from .gui.rewire_gui import RewireGUI
 from .gui.manual_gui import ManualGUI
 
 # FACTORY LEVEL CONFIG
-DAY_DURATION = 180  # 3 mins
-STARTING_QUOTA = round(random.uniform(20, 30), 2)
+DAY_DURATION = 1  # 3 mins
+STARTING_QUOTA = 0
+# STARTING_QUOTA = round(random.uniform(20, 30), 2)
 PREP_STAGE_PICKUP_DURATION = 0.5
 DOOR_HOLD_DURATION = 3.0
 SPARK_INTERVAL = 0.15
@@ -378,6 +379,7 @@ class FactoryLevel(State):
             self.door_hold_progress += self.game.delta_time
             if self.door_hold_progress >= DOOR_HOLD_DURATION:
                 self.door_hold_progress = 0.0
+                self.audio.stop_ost()
                 self.end_day()
         else:
             self.door_hold_progress = 0.0
