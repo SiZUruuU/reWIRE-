@@ -13,7 +13,7 @@ from .gui.rewire_gui import RewireGUI
 from .gui.manual_gui import ManualGUI
 
 # FACTORY LEVEL CONFIG
-DAY_DURATION = 1  # 3 mins
+DAY_DURATION = 180  # 3 mins
 STARTING_QUOTA = round(random.uniform(20, 30), 2)
 PREP_STAGE_PICKUP_DURATION = 0.5
 DOOR_HOLD_DURATION = 3.0
@@ -27,12 +27,12 @@ PICKUP_DURATIONS = {
     EntityType.STONE_GENERATOR: 8.5,
 }
 STARTING_MACHINE_KIT = {
-    EntityType.CONVEYOR: 5,
-    EntityType.BUZZSAW: 0,
-    EntityType.CRUSHER: 0,
-    EntityType.FURNACE: 0,
-    EntityType.WOOD_GENERATOR: 0,
-    EntityType.STONE_GENERATOR: 0,
+    EntityType.CONVEYOR: 99,
+    EntityType.BUZZSAW: 99,
+    EntityType.CRUSHER: 99,
+    EntityType.FURNACE: 99,
+    EntityType.WOOD_GENERATOR: 99,
+    EntityType.STONE_GENERATOR: 99,
 }
 
 # p.s for method explanations etc, check test world. Code here should be clean.
@@ -226,7 +226,7 @@ class FactoryLevel(State):
 
         # placing down machines
         if actions["LMB"] and self.selected_entity != EntityType.NONE:
-            self.audio.play_sfx(self, AudioType.SFX, SFX.MACHINE_PLACED)
+            self.audio.play_sfx(AudioType.SFX, SFX.MACHINE_PLACED)
             if self.machine_inventory.has(self.selected_entity):
                 location = pygame.Vector2(tile_x, tile_y)
                 placed = self.map.place_entity(location, self.direction, self.selected_entity)
@@ -282,7 +282,7 @@ class FactoryLevel(State):
             self.debug_mode = not self.debug_mode
             self.game.reset_key("Lctrl")
             self.game.reset_key("key_d")
-            
+
     ## PICKUP LOGIC
     def handle_pickup(self, actions, tile_x, tile_y):
         entity = self.map.grid[tile_x][tile_y] if self.map.is_tile_valid(tile_x, tile_y) else None
