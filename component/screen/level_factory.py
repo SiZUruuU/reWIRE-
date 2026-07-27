@@ -27,12 +27,12 @@ PICKUP_DURATIONS = {
     EntityType.STONE_GENERATOR: 8.5,
 }
 STARTING_MACHINE_KIT = {
-    EntityType.CONVEYOR: 99,
-    EntityType.BUZZSAW: 99,
-    EntityType.CRUSHER: 99,
-    EntityType.FURNACE: 99,
-    EntityType.WOOD_GENERATOR: 99,
-    EntityType.STONE_GENERATOR: 99,
+    EntityType.CONVEYOR: 5,
+    EntityType.BUZZSAW: 0,
+    EntityType.CRUSHER: 0,
+    EntityType.FURNACE: 0,
+    EntityType.WOOD_GENERATOR: 0,
+    EntityType.STONE_GENERATOR: 0,
 }
 
 # p.s for method explanations etc, check test world. Code here should be clean.
@@ -380,6 +380,7 @@ class FactoryLevel(State):
         self.day_over = False
         self.day_ended = True
         self.is_prep_stage = True
+        self.game.audio_handler.stop_all_loops()
 
         if self.earned_cash_today >= self.quota:
             self.economy.add_cash(self.earned_cash_today)

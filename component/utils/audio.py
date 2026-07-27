@@ -54,3 +54,9 @@ class AudioComp:
         channel = self.loop_channels.pop(loop_name, None)
         if channel is not None and channel.get_busy():
             channel.stop()
+
+    def stop_all_loops(self):
+        for channel in self.loop_channels.values():
+            if channel.get_busy():
+                channel.stop()
+        self.loop_channels.clear()
