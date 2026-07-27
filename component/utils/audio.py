@@ -9,21 +9,23 @@ class AudioComp:
         self._next_channel_id = 2
 
     # USE THIS FOR NON LOOPING LOGIC, ONE SHOT ONLY
-    def play_sfx(self, audio_type, sfx_name):
+    def play_sfx(self, audio_type, sfx_name, volume=1.0):
         sfx = self.game.assets[audio_type][sfx_name]
+        sfx.set_volume(volume)
         sfx.play()
 
-    def play_ost(self, audio_type, ost_name):
+    def play_ost(self, audio_type, ost_name, volume=0.5):
         self.ost = self.game.assets[audio_type][ost_name]
         if not self.ost_channel.get_busy():
             self.ost_channel.play(self.ost, -1)
+        self.ost_channel.set_volume(volume)
 
     def stop_ost(self):
         if self.ost is not None:
             self.ost_channel.stop()
 
     # USE THIS FOR LOGIC WITH LOOOOOOOOOOOOPS
-    def play_loop(self, loop_name, audio_type, sfx_name):
+    def play_loop(self, loop_name, audio_type, sfx_name, volume=1.0):
         # check if the name is not registered
         if loop_name not in self.loop_channels:
             # registers it
@@ -37,6 +39,7 @@ class AudioComp:
         if not channel.get_busy():
             sfx = self.game.assets[audio_type][sfx_name]
             channel.play(sfx, loops=-1)
+        channel.set_volume(volume)
 
     # call this after a sfx trigger is NO LONGER TRUE
     # loop_name can be anything just make sure you are consistent
