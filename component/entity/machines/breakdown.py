@@ -1,4 +1,6 @@
 import random
+from component.utils.enums import AudioType, OST, SFX
+from component.utils.audio import AudioComp
 
 class BreakdownComponent:
     def __init__(self, wear_per_cycle=6, break_chance_base=0.02, break_chance_per_wear=0.0015, full_break_chance=0.25):
@@ -10,6 +12,7 @@ class BreakdownComponent:
         self.break_chance_base = break_chance_base
         self.break_chance_per_wear = break_chance_per_wear
         self.full_break_chance = full_break_chance
+        
 
     def register_cycle(self):
         if self.is_broken:

@@ -3,6 +3,8 @@ from .states import State as Base
 from .level_factory import FactoryLevel
 from .level_office import OfficeLevel
 from ..utils import Animation, Layers, Fonts, get_scaled_mouse_pos
+from component.utils.enums import AudioType, OST, SFX
+from component.utils.audio import AudioComp
 
 # shift configs, how far should the images move
 BG_MAX_SHIFT_X = 12
@@ -26,6 +28,9 @@ class TitleScreen(Base):
         self.background = game.assets[Animation.TITLE_SCREEN][Layers.FLOOR_0]
         self.character = game.assets[Animation.TITLE_SCREEN][Layers.MIDDLE_0]
         self.foreground = game.assets[Animation.TITLE_SCREEN][Layers.FRONT_0]
+
+        self.ost = AudioComp(game)
+        self.ost.play_ost(AudioType.OST, OST.TITLE)
 
         # base smoothing offsets (start centered)
         self.bg_offset = pygame.Vector2(0, 0)
@@ -125,12 +130,15 @@ class TitleScreen(Base):
 
         if self.buttons["play"].collidepoint(mx, my):
             self.game.reset_key("LMB")
+            AudioComp.play_sfx(self, AudioType.SFX, SFX.CLICK)
+            self.ost.stop_ost()
             def do_transition():
                 #new_state = OfficeLevel(self.game)
                 new_state = FactoryLevel(self.game)
                 new_state.enter_state()
             self.game.fade_trans.start(do_transition)
         elif self.buttons["exit"].collidepoint(mx, my):
+            AudioComp.stop_ost(self)
             self.game.reset_key("LMB")
             self.game.isRunning = False
             self.game.isPlaying = False

@@ -3,6 +3,8 @@ import pygame
 from ..entity import BaseEntity
 from ..machines.conveyor import Conveyor
 from ...utils import EntityType, Animation, Layers, get_world_mousePos
+from component.utils.enums import AudioType, OST, SFX
+from component.utils.audio import AudioComp
 
 class PlayerEntity(BaseEntity):
     def __init__(self, position, world, entity_type: EntityType):
@@ -139,6 +141,8 @@ class PlayerEntity(BaseEntity):
             return None, None
 
         return tile_x, tile_y
+
+
 
     # player key inputs
     def handle_input(self, actions):

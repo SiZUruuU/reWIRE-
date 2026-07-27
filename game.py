@@ -247,12 +247,31 @@ class Game:
         # load sfx
         self.assets[AudioType.SFX] = {
             SFX.HOVER : pygame.mixer.Sound(os.path.join(self.sfx_dir, "hover_SFX.mp3")),
+            SFX.CLICK : pygame.mixer.Sound(os.path.join(self.sfx_dir, "click_SFX.mp3")),
+            SFX.WALK : pygame.mixer.Sound(os.path.join(self.sfx_dir, "walking_sfx-ver1.mp3")),
             SFX.HOTBAR_SELECT :  pygame.mixer.Sound(os.path.join(self.sfx_dir, "hotbar-select_v2_SFX.ogg")),
+            SFX.MACHINE_BROKEN : pygame.mixer.Sound(os.path.join(self.sfx_dir, "broken_machine-SFX.mp3")), #TEMPORARYYY
+            SFX.MACHINE_PLACED : pygame.mixer.Sound(os.path.join(self.sfx_dir, "machine_placed-SFX(2).ogg")),
+            SFX.LOSS : pygame.mixer.Sound(os.path.join(self.sfx_dir, "loss_SFX.mp3")),
+            SFX.SELL : pygame.mixer.Sound(os.path.join(self.sfx_dir, "sell_SFX.mp3")),
+            SFX.PICKUP : pygame.mixer.Sound(os.path.join(self.sfx_dir, "pickup_SFX.mp3")),
+            
+        }
+
+        self.assets[AudioType.ENTITY] = {
+            EntityType.BUZZSAW : pygame.mixer.Sound(os.path.join(self.sfx_dir, "buzzsaw_SFX.mp3")),
+            EntityType.CRUSHER : pygame.mixer.Sound(os.path.join(self.sfx_dir, "crusher_SFX.wav")),
+            EntityType.CONVEYOR : pygame.mixer.Sound(os.path.join(self.sfx_dir, "machine_placed-SFX.ogg")),
+            EntityType.FURNACE : pygame.mixer.Sound(os.path.join(self.sfx_dir, "furnace_SFX.mp3")),
+            EntityType.GENERATOR: pygame.mixer.Sound(os.path.join(self.sfx_dir, "machine_placed-SFX.ogg")),
         }
 
         # load ost 
         self.assets[AudioType.OST] = {
-            OST.TITLE : pygame.mixer.Sound(os.path.join(self.ost_dir, "OST #1 Original + Extended.mp3"))
+            OST.TITLE : pygame.mixer.Sound(os.path.join(self.ost_dir, "OST #1 Original + Extended.mp3")),
+            OST.OFFICE: pygame.mixer.Sound(os.path.join(self.ost_dir, "office_OST(2).mp3")),
+            OST.FACTORY: pygame.mixer.Sound(os.path.join(self.ost_dir, "factory_OST.ogg"))
+            
         }
         # load sprites
         # player:

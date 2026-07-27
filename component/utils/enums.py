@@ -100,17 +100,25 @@ class Fonts(Enum):
 class AudioType(Enum):
     SFX = "sfx"
     OST = "ost"
-
+    ENTITY = "entity"
+    
 class SFX(Enum):
     HOVER = auto()
     CLICK = auto()
     WALK = auto()
     HOTBAR_SELECT = auto()
-    MACHINE_RUNNING = auto()
     MACHINE_BROKEN = auto()
     MACHINE_PLACED = auto()
+    BUZZSAW = auto()
+    CRUSHER = auto()
+    CONVEYER = auto()
+    FURNACE = auto()
+    GENERATOR = auto()
+    LOSS = auto()
+    SELL = auto()
+    PICKUP = auto()
 
 class OST(Enum):
     TITLE = auto()
     OFFICE = auto()
-    DAY = auto()
+    FACTORY = auto()

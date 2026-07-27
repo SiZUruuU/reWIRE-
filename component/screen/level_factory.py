@@ -78,6 +78,11 @@ class FactoryLevel(State):
         self.game = game
         self.map = FactoryMap(self)
 
+        #Walking State 
+        self.iswalking = False
+
+        self.audio = AudioComp(game)
+
         self.player = Player(pygame.Vector2(self.WIDTH/2, self.HEIGHT/2), self, EntityType.PLAYER)
         self.camera = Camera(self.player, game.GAME_WIDTH, game.GAME_HEIGHT)
         self.camera.setmethod(Follow(self.camera, self.player))
@@ -172,6 +177,9 @@ class FactoryLevel(State):
         self.all_sprites.update(self.game.global_time, delta_time, actions)
         self.camera.scroll(delta_time)
 
+        #Walking state checker
+        self.audio.play_walkingSFX(self.iswalking, AudioType.SFX, SFX.WALK)
+
         # resolve player collision with obstacles
         resolved = self.map.resolve_collisions(self.player.rect, prev_rect)
         self.player.rect.topleft = resolved.topleft
@@ -196,6 +204,13 @@ class FactoryLevel(State):
                 AudioComp.play_sfx(self, AudioType.SFX, SFX.HOTBAR_SELECT)
                 self.game.reset_key(key_string)
 
+        self.iswalking = any([
+            actions["left"],
+            actions["right"],
+            actions["up"],
+            actions["down"]
+        ])
+
         # clear held machine
         if actions["key_q"]:
             self.selected_entity = EntityType.NONE
@@ -213,6 +228,7 @@ class FactoryLevel(State):
 
         # placing down machines
         if actions["LMB"] and self.selected_entity != EntityType.NONE:
+            AudioComp.play_sfx(self, AudioType.SFX, SFX.MACHINE_PLACED)
             if self.machine_inventory.has(self.selected_entity):
                 location = pygame.Vector2(tile_x, tile_y)
                 placed = self.map.place_entity(location, self.direction, self.selected_entity)
@@ -256,6 +272,7 @@ class FactoryLevel(State):
         # end prep stage, starts the day proper
         if actions["key_enter"] and self.is_prep_stage:
             self.start_stage_transition()
+            self.audio.play_ost(AudioType.OST, OST.FACTORY)
             self.game.reset_key("key_enter")
 
         # end day, go to door and hold 'e', only works if day is done
@@ -267,6 +284,12 @@ class FactoryLevel(State):
             self.debug_mode = not self.debug_mode
             self.game.reset_key("Lctrl")
             self.game.reset_key("key_d")
+
+    def play_walkSFX(self):
+        if self.walking:
+            AudioComp.play_sfx(self, AudioType.SFX, SFX.WALK)
+        else:
+            pass
 
     ## PICKUP LOGIC
     def handle_pickup(self, actions, tile_x, tile_y):
