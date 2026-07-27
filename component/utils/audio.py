@@ -26,20 +26,18 @@ class AudioComp:
 
     # USE THIS FOR LOGIC WITH LOOOOOOOOOOOOPS
     def play_loop(self, loop_name, audio_type, sfx_name, volume=1.0):
-        # check if the name is not registered
-        if loop_name not in self.loop_channels:
-            # registers it
-            self.loop_channels[loop_name] = pygame.mixer.Channel(self._next_channel_id)
-            self._next_channel_id += 1
+        sfx = self.game.assets[audio_type][sfx_name]
+        channel = self.loop_channels.get(loop_name)
 
-        # sfx play logic
-        # finds the sfx registered in the channel
-        channel = self.loop_channels[loop_name]
-        # if that audio is NOT playing, play it
-        if not channel.get_busy():
-            sfx = self.game.assets[audio_type][sfx_name]
-            channel.play(sfx, loops=-1)
-        channel.set_volume(volume)
+        if channel is None:
+            channel = pygame.mixer.find_channel(True)
+            if channel is not None:
+                self.loop_channels[loop_name] = channel
+
+        if channel is not None:
+            if not channel.get_busy() or channel.get_sound() != sfx:
+                channel.play(sfx, loops=-1)
+            channel.set_volume(volume)
 
     # call this after a sfx trigger is NO LONGER TRUE
     # loop_name can be anything just make sure you are consistent

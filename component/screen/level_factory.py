@@ -167,6 +167,20 @@ class FactoryLevel(State):
 
     ## LOGIC METHODS ##
     def update(self, delta_time, actions):
+
+        # Inside FactoryLevel.update():
+
+        # Check if any entity in all_sprites with a breakdown component is broken
+        any_machine_broken = any(
+            getattr(sprite, "breakdown", None) and sprite.breakdown.is_broken
+            for sprite in self.all_sprites
+        )
+
+        if any_machine_broken:
+            self.audio.play_loop("machine_broken_loop", AudioType.SFX, SFX.MACHINE_BROKEN)
+        else:
+            self.audio.stop_loop("machine_broken_loop")
+
         if not self.day_ended and not self.is_prep_stage and not self.day_over:
             self.day_timer += delta_time
             if self.day_timer >= DAY_DURATION:

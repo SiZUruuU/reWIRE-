@@ -67,13 +67,7 @@ class MachineEntity(BaseEntity):
     def animate(self, global_time):
         if self.breakdown.is_broken:
             self.apply_shake(self.position, global_time % 0.3, 0.3, max_intensity=3.0)
-            was_broken = False
-            is_currently_broken = bool(self.breakdown.is_broken)
 
-            if is_currently_broken and not was_broken:
-                self.world.audio.play_sfx(AudioType.SFX, SFX.MACHINE_BROKEN)
-
-            was_broken = is_currently_broken
         elif self.is_processing and self.active_recipe is not None:
             duration = self.active_recipe["duration"]
             elapsed = duration - self.process_time
