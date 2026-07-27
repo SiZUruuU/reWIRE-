@@ -230,14 +230,14 @@ class Game:
         text_rect.center = (x, y)
         surface.blit(text_surface, text_rect)
 
-    def get_base_path():
+    def get_base_path(self):
         if hasattr(sys, '_MEIPASS'):
             return sys._MEIPASS
         return os.path.dirname(os.path.abspath(__file__))
     
     # handle asset loading
     def load_assets(self):
-        self.assets_dir = os.path.join(self.get_base_path, "asset")
+        self.assets_dir = os.path.join(self.get_base_path(), "asset")
         self.sprite_dir = os.path.join(self.assets_dir, "sprites")
         self.font_dir = os.path.join(self.assets_dir, "fonts")
         self.sfx_dir = os.path.join(self.assets_dir, "sfx")
